@@ -1297,6 +1297,11 @@ with tab_dashboard:
                         pnl_str = f"{pnl_val:+.1f}%"
                         pnl_color = "#e11d48" if pnl_val > 0 else "#2563eb"
                         
+                    mom_val = row['Mom'] * 100.0 if not pd.isna(row['Mom']) else np.nan
+                    mom_color = "#e11d48" if (not pd.isna(mom_val) and mom_val > 0) else ("#2563eb" if (not pd.isna(mom_val) and mom_val < 0) else "#64748b")
+                    mom_str = f"{mom_val:+.1f}%" if not pd.isna(mom_val) else "N/A"
+                    mom_rank = row['MomRank']
+                        
                     belief_badge = '<span style="font-size:0.70rem; background:#ede9fe; color:#6d28d9; padding:1px 4px; border-radius:3px; font-weight:700; border:1px solid #ddd6fe; margin-right:3px;">📌신념</span>' if row['Belief'] else '<span style="font-size:0.70rem; background:#eff6ff; color:#1d4ed8; padding:1px 4px; border-radius:3px; font-weight:700; border:1px solid #dbeafe; margin-right:3px;">💼스윙</span>'
                     hold_info = f"{row['Qty']:.0f}주 @ ${row['Avg']:,.1f}" if row['Qty'] > 0 else "미보유"
                     price_str = f"${row['Close']:,.2f}" if not pd.isna(row['Close']) else "N/A"
