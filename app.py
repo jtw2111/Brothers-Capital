@@ -8,6 +8,13 @@ from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
+import textwrap
+
+def render_html(html_str):
+    if hasattr(st, "html"):
+        st.html(html_str)
+    else:
+        st.markdown(textwrap.dedent(html_str).strip(), unsafe_allow_html=True)
 
 # 페이지 기본 설정
 st.set_page_config(
@@ -122,6 +129,14 @@ st.markdown("""
         margin-bottom: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
+    .card-belief {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
     .card-empty {
         background: #f8fafc;
         color: #64748b;
@@ -226,7 +241,8 @@ STOCK_META = {
     "TXG":   {"kr": "10x 지노믹스 (유전자)", "en": "10x Genomics"},
     "MSFT":  {"kr": "마이크로소프트", "en": "Microsoft"},
     "NVDA":  {"kr": "엔비디아 (AI반도체)", "en": "NVIDIA"},
-    "DRAM":  {"kr": "디웨이브 퀀텀 (양자)", "en": "D-Wave Quantum"},
+    "DRAM":  {"kr": "라운드힐 메모리 반도체 (DRAM)", "en": "Roundhill Memory ETF"},
+    "VYLR":  {"kr": "바이러 (VYLR)", "en": "Vylor Inc."},
     "LLY":   {"kr": "일라이 릴리 (비만치료)", "en": "Eli Lilly"},
     "AAPL":  {"kr": "애플", "en": "Apple"},
     "META":  {"kr": "메타 (페이스북)", "en": "Meta Platforms"},
@@ -429,42 +445,43 @@ DEFAULT_THEMES = {
 }
 
 PRESETS = {
-    "Brothers Capital 기본 우량주": [
-        {"symbol": "GOOGL", "use": True, "qty": 30.0, "avg": 349.77},
-        {"symbol": "AMZN",  "use": True, "qty": 30.0, "avg": 254.99},
-        {"symbol": "DE",    "use": True, "qty": 25.0, "avg": 628.75},
-        {"symbol": "BRK-B", "use": True, "qty": 7.0,  "avg": 506.50},
-        {"symbol": "NVO",   "use": True, "qty": 20.0, "avg": 43.68},
-        {"symbol": "RKLB",  "use": True, "qty": 255.0,"avg": 82.19},
-        {"symbol": "TXG",   "use": True, "qty": 0.0,  "avg": 0.0},
-        {"symbol": "MSFT",  "use": True, "qty": 0.0,  "avg": 0.0},
-        {"symbol": "NVDA",  "use": True, "qty": 0.0,  "avg": 0.0},
-        {"symbol": "DRAM",  "use": True, "qty": 180.0,"avg": 52.00},
-        {"symbol": "LLY",   "use": True, "qty": 0.0,  "avg": 0.0},
+    "Dr_Rotation_Basket v1.3 실전 바스켓 (기본)": [
+        {"symbol": "GOOGL", "use": True,  "qty": 30.0,  "avg": 349.77, "belief": True},
+        {"symbol": "AMZN",  "use": True,  "qty": 30.0,  "avg": 254.99, "belief": False},
+        {"symbol": "DE",    "use": True,  "qty": 25.0,  "avg": 628.75, "belief": False},
+        {"symbol": "BRK-B", "use": True,  "qty": 7.0,   "avg": 506.50, "belief": True},
+        {"symbol": "NVO",   "use": True,  "qty": 20.0,  "avg": 43.68,  "belief": True},
+        {"symbol": "RKLB",  "use": True,  "qty": 255.0, "avg": 82.19,  "belief": True},
+        {"symbol": "DRAM",  "use": True,  "qty": 180.0, "avg": 52.00,  "belief": False},
+        {"symbol": "VYLR",  "use": True,  "qty": 150.0, "avg": 73.03,  "belief": True},
+        {"symbol": "TXG",   "use": False, "qty": 0.0,   "avg": 0.0,    "belief": False},
+        {"symbol": "LLY",   "use": False, "qty": 0.0,   "avg": 0.0,    "belief": False},
+        {"symbol": "NVDA",  "use": False, "qty": 0.0,   "avg": 0.0,    "belief": False},
     ],
     "매그니피센트 7 (빅테크)": [
-        {"symbol": "NVDA", "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "MSFT", "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "AAPL", "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "GOOGL","use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "AMZN", "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "META", "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "TSLA", "use": True, "qty": 0.0, "avg": 0.0},
+        {"symbol": "NVDA", "use": True, "qty": 0.0, "avg": 0.0, "belief": False},
+        {"symbol": "MSFT", "use": True, "qty": 0.0, "avg": 0.0, "belief": False},
+        {"symbol": "AAPL", "use": True, "qty": 0.0, "avg": 0.0, "belief": False},
+        {"symbol": "GOOGL","use": True, "qty": 0.0, "avg": 0.0, "belief": False},
+        {"symbol": "AMZN", "use": True, "qty": 0.0, "avg": 0.0, "belief": False},
+        {"symbol": "META", "use": True, "qty": 0.0, "avg": 0.0, "belief": False},
+        {"symbol": "TSLA", "use": True, "qty": 0.0, "avg": 0.0, "belief": False},
     ],
     "미국 대표 배당 성장주": [
-        {"symbol": "SCHD", "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "JNJ",  "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "PG",   "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "KO",   "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "PEP",  "use": True, "qty": 0.0, "avg": 0.0},
-        {"symbol": "ABBV", "use": True, "qty": 0.0, "avg": 0.0},
+        {"symbol": "SCHD", "use": True, "qty": 0.0, "avg": 0.0, "belief": True},
+        {"symbol": "JNJ",  "use": True, "qty": 0.0, "avg": 0.0, "belief": True},
+        {"symbol": "PG",   "use": True, "qty": 0.0, "avg": 0.0, "belief": True},
+        {"symbol": "KO",   "use": True, "qty": 0.0, "avg": 0.0, "belief": True},
+        {"symbol": "PEP",  "use": True, "qty": 0.0, "avg": 0.0, "belief": True},
+        {"symbol": "ABBV", "use": True, "qty": 0.0, "avg": 0.0, "belief": True},
     ]
 }
 
 DEFAULT_SETTINGS = {
-    "max_pos": 4, "start_year": 2018, "cost_pct": 0.10,
+    "max_pos": 4, "start_year": 2006, "oos_year": 2020, "cost_pct": 0.10, "cash_yield": 0.0,
     "sma_len": 200, "slope_len": 20, "break_pct": 3.0, "support_pct": 3.0,
-    "use_a": True, "use_b": True, "use_c": True,
+    "use_a": True, "use_b": True, "use_c": True, "use_deep": True, "deep_pct": 1.0, "use_vol_filt": True,
+    "rank_mode": "6개월 모멘텀", "acct_usd": 0.0
 }
 
 # ===== 파일 영구 저장 / 로딩 헬퍼 =====
@@ -472,10 +489,14 @@ def load_saved_basket():
     if PORTFOLIO_FILE.exists():
         try:
             with open(PORTFOLIO_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                for item in data:
+                    if "belief" not in item:
+                        item["belief"] = item.get("symbol") in ["GOOGL", "BRK-B", "NVO", "RKLB", "VYLR"]
+                return data
         except Exception:
             pass
-    return PRESETS["Brothers Capital 기본 우량주"]
+    return PRESETS["Dr_Rotation_Basket v1.3 실전 바스켓 (기본)"]
 
 def save_basket_to_disk(basket):
     with open(PORTFOLIO_FILE, "w", encoding="utf-8") as f:
@@ -485,7 +506,10 @@ def load_saved_settings():
     if SETTINGS_FILE.exists():
         try:
             with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                saved = json.load(f)
+                res = dict(DEFAULT_SETTINGS)
+                res.update(saved)
+                return res
         except Exception:
             pass
     return DEFAULT_SETTINGS
@@ -599,8 +623,11 @@ def calc_indicators(df, cfg):
     sigC = cfg['use_c'] & gold & deep & vol_ok
     
     sig = pd.Series(0, index=df.index)
-    sig[regime & sigA] = 1; sig[regime & ~sigA & sigB] = 2; sig[regime & ~sigA & ~sigB & sigC] = 3
-    mom = c / c.shift(126) - 1.0
+    rank_mode = cfg.get('rank_mode', "6개월 모멘텀")
+    if rank_mode == "12-1개월 모멘텀":
+        mom = c.shift(21) / c.shift(252) - 1.0 if len(c) > 252 else (c / c.shift(126) - 1.0 if len(c) > 126 else pd.Series(np.nan, index=df.index))
+    else:
+        mom = c / c.shift(126) - 1.0 if len(c) > 126 else pd.Series(np.nan, index=df.index)
     
     reg_code = pd.Series(np.nan, index=df.index)
     reg_code[regime] = 2; reg_code[~regime & (c >= sma200)] = 1
@@ -632,116 +659,229 @@ if macro_data:
             fmt_val = f"${val:,.2f}"
             
         short_lbl = label.replace(" (KOSPI)", "").replace(" (Gold)", "")
-        chips_html.append(f"""
-        <div class="macro-ticker-item">
-            <div class="macro-title">{short_lbl}</div>
-            <div class="macro-val">{fmt_val}</div>
-            <div class="{chg_cls}">{chg_sign}{chg:.2f}%</div>
-        </div>
-        """)
+        chips_html.append(f'<div class="macro-ticker-item"><div class="macro-title">{short_lbl}</div><div class="macro-val">{fmt_val}</div><div class="{chg_cls}">{chg_sign}{chg:.2f}%</div></div>')
     
-    st.markdown(f"""
-    <div style="margin-bottom: 2px;">
+    full_macro_html = f"""
+    <div style="margin-bottom: 4px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">🌐 글로벌 매크로 전광판</span>
+            <span style="font-size: 0.82rem; font-weight: 700; color: #475569;">🌐 글로벌 매크로 실시간 전광판</span>
             <span style="font-size: 0.72rem; color: #94a3b8;">👉 좌우로 스와이프</span>
         </div>
         <div class="macro-ticker-scroll">
             {''.join(chips_html)}
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    render_html(full_macro_html)
 
 # ===== 데이터 로드 및 최신 상태 도출 =====
 cfg = st.session_state.settings
-active_tickers = [item['symbol'] for item in st.session_state.basket if item['use']]
+active_tickers = [item['symbol'] for item in st.session_state.basket if item.get('use', True)]
 raw_data = fetch_stock_data(active_tickers, f"{cfg['start_year']}-01-01")
 
 ind_dict = {}
 for sym in active_tickers:
     if sym in raw_data.columns.levels[0]:
         df_sym = raw_data[sym].dropna(subset=['Close'])
-        if len(df_sym) > 200:
+        if len(df_sym) >= 5:
             ind_dict[sym] = calc_indicators(df_sym, cfg)
 
 spy_df = raw_data['SPY'].dropna(subset=['Close']) if 'SPY' in raw_data.columns.levels[0] else None
 sim_start = pd.to_datetime(f"{cfg['start_year']}-01-01")
 common_idx = spy_df.loc[spy_df.index >= sim_start].index if spy_df is not None else pd.date_index()
 
+# 1. v1.3 실전자산 슬롯 & 보유 집계 (신념 보유 vs 시스템 스윙 구분)
+my_held = 0  # 시스템 보유 (신념 제외)
+my_sell = 0  # 시스템 보유 중 붕괴 이탈
+my_bel = 0   # 신념 보유
+
+for item in st.session_state.basket:
+    if item.get('use', True) and item.get('qty', 0.0) > 0:
+        sym = item['symbol']
+        is_broken = False
+        if sym in ind_dict and not ind_dict[sym].empty:
+            b_val = ind_dict[sym]['Broken'].iloc[-1]
+            is_broken = bool(b_val) if not pd.isna(b_val) else False
+        if item.get('belief', False):
+            my_bel += 1
+        else:
+            my_held += 1
+            if is_broken:
+                my_sell += 1
+
+my_free = max(0, cfg['max_pos'] - my_held + my_sell)
+
+# 2. 모멘텀 순위 매김 (유효한 모멘텀 기준)
+m_ranks = {}
+all_moms = {}
+for item in st.session_state.basket:
+    sym = item['symbol']
+    if item.get('use', True) and sym in ind_dict and not ind_dict[sym].empty:
+        val = ind_dict[sym]['Mom'].iloc[-1]
+        if not pd.isna(val):
+            all_moms[sym] = val
+sorted_moms = sorted(all_moms.items(), key=lambda x: x[1], reverse=True)
+for r_idx, (s, _) in enumerate(sorted_moms, start=1):
+    m_ranks[s] = r_idx
+
+# 3. 빈 슬롯에 들어갈 매수 후보 선정 (강세 + 신호 + 미보유 -> 모멘텀 상위 순)
+picked_syms = set()
+slots_left = my_free
+cand_list = []
+for item in st.session_state.basket:
+    sym = item['symbol']
+    if item.get('use', True) and item.get('qty', 0.0) <= 0 and sym in ind_dict and not ind_dict[sym].empty:
+        lr = ind_dict[sym].iloc[-1]
+        rc = lr['RegCode']; sig = lr['Sig']
+        if rc == 2 and sig > 0:
+            mm = lr['Mom'] if not pd.isna(lr['Mom']) else -9.0
+            cand_list.append((sym, mm))
+cand_list.sort(key=lambda x: x[1], reverse=True)
+for s, _ in cand_list[:slots_left]:
+    picked_syms.add(s)
+
+# 4. 종목별 상태 및 v1.3 행동 도출
 latest_status = []
 for item in st.session_state.basket:
-    sym = item['symbol']; use = item['use']; qty = item['qty']; avg = item['avg']
-    if not use or sym not in ind_dict:
-        continue
-    df_sym = ind_dict[sym]; last_row = df_sym.iloc[-1]
-    c = last_row['Close']; rc = last_row['RegCode']; sig = last_row['Sig']
-    brk = last_row['Brk']; mom = last_row['Mom']; broken = last_row['Broken']
-    dist_brk = (brk / c - 1.0) * 100.0
+    sym = item['symbol']
+    use = item.get('use', True)
+    qty = item.get('qty', 0.0)
+    avg = item.get('avg', 0.0)
+    belief = item.get('belief', False)
     
-    if broken and qty > 0:
-        act = "🚨 매도 (내일 시가 전량)"; status_type = "SELL"
-    elif qty > 0:
-        act = "✅ 보유 유지 (강세)" if rc == 2 else "⚠️ 보유 관망 (붕괴선 주시)"
-        status_type = "HOLD_GOOD" if rc == 2 else "HOLD_WARN"
-    elif rc == 2 and sig > 0:
-        act = "🟢 매수 (내일 시가)"; status_type = "BUY"
-    elif rc == 2:
-        act = "👀 관찰 (강세 · 신호 대기)"; status_type = "WATCH"
-    else:
-        act = "⛔ 매수 금지 (약세 국면)"; status_type = "AVOID"
+    if not use:
+        latest_status.append({
+            'Symbol': sym, 'Close': np.nan, 'RegCode': np.nan, 'Sig': 0, 'Broken': False,
+            'Brk': np.nan, 'DistBrk': np.nan, 'Mom': np.nan, 'MomRank': "-", 'Qty': qty, 'Avg': avg,
+            'PnL_pct': np.nan, 'Belief': belief, 'Action': "제외", 'StatusType': "EXCLUDE",
+            'Date': "-"
+        })
+        continue
         
-    pnl_pct = (c / avg - 1.0) * 100.0 if (qty > 0 and avg > 0) else np.nan
+    if sym not in ind_dict or ind_dict[sym].empty:
+        latest_status.append({
+            'Symbol': sym, 'Close': np.nan, 'RegCode': np.nan, 'Sig': 0, 'Broken': False,
+            'Brk': np.nan, 'DistBrk': np.nan, 'Mom': np.nan, 'MomRank': "-", 'Qty': qty, 'Avg': avg,
+            'PnL_pct': np.nan, 'Belief': belief, 'Action': "❔ 데이터 로드 중", 'StatusType': "PENDING",
+            'Date': "-"
+        })
+        continue
+        
+    df_sym = ind_dict[sym]
+    last_row = df_sym.iloc[-1]
+    c = last_row['Close']
+    rc = last_row['RegCode']
+    sig = last_row['Sig']
+    brk = last_row['Brk']
+    broken = bool(last_row['Broken']) if not pd.isna(last_row['Broken']) else False
+    mom = last_row['Mom']
+    dist_brk = (brk / c - 1.0) * 100.0 if (not pd.isna(brk) and not pd.isna(c) and c > 0) else np.nan
+    pnl_pct = (c / avg - 1.0) * 100.0 if (qty > 0 and avg > 0 and not pd.isna(c)) else np.nan
+    mom_rank_str = str(m_ranks.get(sym, "-"))
+    
+    acct_usd = cfg.get('acct_usd', 0.0)
+    shares_txt = ""
+    if acct_usd > 0 and not pd.isna(c) and c > 0:
+        calc_q = int((acct_usd / cfg['max_pos']) // c)
+        if calc_q > 0:
+            shares_txt = f" · 약 {calc_q:,}주"
+            
+    # v1.3 Action Logic
+    if pd.isna(rc):
+        act = "❔ 판정 불가 (SMA200 미형성 · 상장 200일 미만)"
+        status_type = "PENDING"
+    elif qty > 0 and belief:
+        if broken:
+            act = "📌 신념 보유 · 추세 붕괴 (논리 점검 권장)"
+            status_type = "BELIEF_WARN"
+        elif rc == 2:
+            act = "📌 신념 보유 · 강세"
+            status_type = "BELIEF_GOOD"
+        else:
+            act = "📌 신념 보유 · 약세 (참고)"
+            status_type = "BELIEF_WEAK"
+    elif qty > 0:
+        if broken:
+            act = "🔍 논리 점검 (추세 붕괴 → 정리 검토)"
+            status_type = "SELL"
+        elif rc == 2:
+            act = "✅ 보유 유지"
+            status_type = "HOLD_GOOD"
+        else:
+            act = "⚠️ 보유 · 약세 (붕괴선 주시)"
+            status_type = "HOLD_WARN"
+    elif rc != 2:
+        act = "⛔ 매수 금지 (강세 아님)"
+        status_type = "AVOID"
+    elif sym in picked_syms:
+        act = f"🟢 매수 (내일 시가){shares_txt}"
+        status_type = "BUY"
+    elif sig > 0:
+        act = "⏸ 신호 있으나 슬롯 없음"
+        status_type = "PAUSE"
+    else:
+        act = "👀 관찰 (강세 · 신호 대기)"
+        status_type = "WATCH"
+        
     latest_status.append({
         'Symbol': sym, 'Close': c, 'RegCode': rc, 'Sig': sig, 'Broken': broken,
-        'Brk': brk, 'DistBrk': dist_brk, 'Mom': mom, 'Qty': qty, 'Avg': avg,
-        'PnL_pct': pnl_pct, 'Action': act, 'StatusType': status_type,
+        'Brk': brk, 'DistBrk': dist_brk, 'Mom': mom, 'MomRank': mom_rank_str, 'Qty': qty, 'Avg': avg,
+        'PnL_pct': pnl_pct, 'Belief': belief, 'Action': act, 'StatusType': status_type,
         'Date': df_sym.index[-1].strftime('%Y-%m-%d')
     })
 
 status_df = pd.DataFrame(latest_status)
-if not status_df.empty:
-    status_df['MomRank'] = status_df['Mom'].rank(ascending=False, method='min')
 
 # ===== 상단 2: 오늘의 행동 요약 카드 + ? 마크 도움말 =====
 title_col, help_col = st.columns([5, 1])
+recent_date = status_df['Date'].iloc[0] if not status_df.empty else datetime.today().strftime('%Y-%m-%d')
 with title_col:
     st.title("🏛️ Brothers Capital (브라더스 캐피탈)")
-    st.caption(f"대형주 순환 스윙 & 글로벌 거시자산 올인원 나침반 | 최근 데이터 기준일: {status_df['Date'].iloc[0] if not status_df.empty else '로딩중'} | 매일 장마감 후 익일 시가 실행")
+    st.caption(f"◆ 실전 현황판 · {recent_date} 종가 기준 · 시스템 보유 {my_held}/{cfg['max_pos']} (빈 슬롯 {my_free}) · 신념 보유 {my_bel}개 | 익일 시가 실행")
 with help_col:
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
-    with st.popover("❓ 오늘의 행동 카드란?"):
+    with st.popover("❓ v1.3 규칙 및 카드 보는 법"):
         st.markdown("""
-        **🔔 오늘의 행동 카드 보는 법:**
-        - 매일 새벽 미국 정규장 마감 후, 확정 종가를 바탕으로 알고리즘이 즉시 계산합니다.
-        - **🟢 초록 카드 (매수 추천):** 강세 국면(SMA200 위 & 상승)에서 지지/눌림 신호가 뜬 종목입니다. **오늘 밤 미국장 시가에 매수**를 고려하세요.
-        - **🚨 빨강 카드 (매도 경보):** 2일 연속 붕괴선(SMA200 -3%)을 이탈한 종목입니다. 감정을 버리고 **오늘 밤 미국장 시가에 전량 매도(원칙 손절)**합니다.
-        - **✅ 파랑 카드 (보유 지속):** 추세가 건강하게 유지 중인 종목입니다. 원칙대로 계속 홀딩합니다.
+        **🏛️ Brothers Capital v1.3 핵심 실전 원칙:**
+        - **시스템 스윙 (최대 K개) vs 신념 보유 (Conviction) 분리:**
+          - **💼 시스템 스윙:** 추세 순환매를 따르는 종목. 슬롯(기본 4개)을 차지하며 2일 연속 붕괴선 이탈 시 **🔍 논리 점검 후 정리 검토**합니다.
+          - **📌 신념 보유:** 장기 가치관으로 보유하는 핵심 자산(예: 구글, 버크셔, 노보 등). **스윙 슬롯을 차지하지 않으며**, 추세가 꺾여도 강제 매도가 아닌 **'논리 점검 권장'**으로 투자 아이디어를 스스로 재확인하도록 돕습니다.
+        - **🟢 초록 카드 (매수 추천):** 강세 국면(SMA200 위 & 상승) + 진입 신호 + 모멘텀 상위 + 빈 슬롯 확보 시 익일 시가 매수.
+        - **🔍 빨강 카드 (논리 점검):** 2일 연속 붕괴선(-3%) 이탈 종목. 투자 논리를 점검하고 정리를 검토합니다.
+        - **❔ 200일 미만 종목:** DRAM, VYLR처럼 상장 후 200일이 안 된 종목은 왜곡을 막기 위해 **'판정 불가'**로 안전하게 관리합니다.
         """)
 
 buy_items = status_df[status_df['StatusType'] == "BUY"] if not status_df.empty else pd.DataFrame()
 sell_items = status_df[status_df['StatusType'] == "SELL"] if not status_df.empty else pd.DataFrame()
+belief_items = status_df[status_df['StatusType'].str.startswith("BELIEF")] if not status_df.empty else pd.DataFrame()
 hold_items = status_df[status_df['StatusType'].isin(["HOLD_GOOD", "HOLD_WARN"])] if not status_df.empty else pd.DataFrame()
 
-c1, c2, c3 = st.columns(3)
+c1, c2, c3, c4 = st.columns(4)
 with c1:
     if not buy_items.empty:
         buy_sorted = buy_items.sort_values(by='Mom', ascending=False)
-        symbols_str = ", ".join([f"**{get_stock_short_label(row['Symbol'])}** (6M {row['Mom']*100:+.1f}%)" for _, row in buy_sorted.iterrows()])
-        st.markdown(f"""<div class="card-buy"><h4 style="margin:0; font-size:1.05rem;">🟢 내일 시가 매수 추천 ({len(buy_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.95rem;">{symbols_str}</p><small style="opacity:0.9;">강세 국면 + 지지/눌림 신호 확인</small></div>""", unsafe_allow_html=True)
+        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in buy_sorted.iterrows()])
+        render_html(f"""<div class="card-buy"><h4 style="margin:0; font-size:1.0rem;">🟢 매수 추천 ({len(buy_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">강세 국면 + 눌림/반등 진입</small></div>""")
     else:
-        st.markdown("""<div class="card-empty"><b>🟢 매수 추천: 없음</b><br><small>오늘은 진입 신호가 감지되지 않았습니다.</small></div>""", unsafe_allow_html=True)
+        render_html("""<div class="card-empty"><b>🟢 매수 추천: 없음</b><br><small>오늘은 진입 신호가 없습니다.</small></div>""")
 with c2:
     if not sell_items.empty:
-        symbols_str = ", ".join([f"**{get_stock_short_label(row['Symbol'])}**" for _, row in sell_items.iterrows()])
-        st.markdown(f"""<div class="card-sell"><h4 style="margin:0; font-size:1.05rem;">🚨 내일 시가 전량 매도 ({len(sell_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.95rem;">{symbols_str}</p><small style="opacity:0.9;">SMA200 추세 붕괴선 2일 연속 이탈!</small></div>""", unsafe_allow_html=True)
+        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in sell_items.iterrows()])
+        render_html(f"""<div class="card-sell"><h4 style="margin:0; font-size:1.0rem;">🔍 논리 점검 ({len(sell_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">추세 붕괴선 이탈 → 정리 검토</small></div>""")
     else:
-        st.markdown("""<div class="card-empty"><b>🚨 매도/손절 경보: 없음</b><br><small>보유 종목 중 위험선을 이탈한 종목이 없습니다.</small></div>""", unsafe_allow_html=True)
+        render_html("""<div class="card-empty"><b>🔍 논리 점검: 없음</b><br><small>붕괴선을 이탈한 종목이 없습니다.</small></div>""")
 with c3:
-    if not hold_items.empty:
-        symbols_str = ", ".join([f"**{get_stock_short_label(row['Symbol'])}**" for _, row in hold_items.iterrows()])
-        st.markdown(f"""<div class="card-hold"><h4 style="margin:0; font-size:1.05rem;">✅ 보유 지속 ({len(hold_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.95rem;">{symbols_str}</p><small style="opacity:0.9;">상승 추세 유지 중. 원칙대로 홀딩하세요.</small></div>""", unsafe_allow_html=True)
+    if not belief_items.empty:
+        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in belief_items.iterrows()])
+        render_html(f"""<div class="card-belief"><h4 style="margin:0; font-size:1.0rem;">📌 신념 보유 ({len(belief_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">장기 신념 종목 (슬롯 미차감)</small></div>""")
     else:
-        st.markdown("""<div class="card-empty"><b>✅ 보유 중인 종목 없음</b><br><small>현재 포트폴리오에 보유 종목이 없습니다.</small></div>""", unsafe_allow_html=True)
+        render_html("""<div class="card-empty"><b>📌 신념 보유 없음</b><br><small>신념 보유로 지정된 종목이 없습니다.</small></div>""")
+with c4:
+    if not hold_items.empty:
+        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in hold_items.iterrows()])
+        render_html(f"""<div class="card-hold"><h4 style="margin:0; font-size:1.0rem;">✅ 시스템 보유 ({len(hold_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">스윙 추세 유지 중. 원칙 홀딩</small></div>""")
+    else:
+        render_html("""<div class="card-empty"><b>✅ 시스템 보유 없음</b><br><small>보유 중인 시스템 종목이 없습니다.</small></div>""")
 
 st.markdown("---")
 
@@ -800,17 +940,19 @@ with tab_dashboard:
         with v_col2:
             filter_mode = st.selectbox(
                 "종목 필터",
-                ["전체 종목", "🟢 강세 국면만", "🔔 신호 발생 종목", "💼 내 보유 종목만"],
+                ["전체 종목", "🔔 신호 발생 (매수/논리점검)", "📌 신념 보유 종목만", "💼 시스템 스윙 종목만", "🟢 강세 국면만"],
                 index=0
             )
 
         filtered_status = status_df.copy()
         if filter_mode == "🟢 강세 국면만":
             filtered_status = filtered_status[filtered_status['RegCode'] == 2]
-        elif filter_mode == "🔔 신호 발생 종목":
-            filtered_status = filtered_status[filtered_status['StatusType'].isin(["BUY", "SELL"])]
-        elif filter_mode == "💼 내 보유 종목만":
-            filtered_status = filtered_status[filtered_status['Qty'] > 0]
+        elif filter_mode == "🔔 신호 발생 (매수/논리점검)":
+            filtered_status = filtered_status[filtered_status['StatusType'].isin(["BUY", "SELL", "BELIEF_WARN"])]
+        elif filter_mode == "📌 신념 보유 종목만":
+            filtered_status = filtered_status[filtered_status['Belief'] == True]
+        elif filter_mode == "💼 시스템 스윙 종목만":
+            filtered_status = filtered_status[(filtered_status['Belief'] == False) & (filtered_status['Qty'] > 0)]
 
         if "모바일" in view_mode:
             if filtered_status.empty:
@@ -822,19 +964,50 @@ with tab_dashboard:
                     sym = row['Symbol']
                     kr_name = STOCK_META.get(sym, {}).get('kr', sym)
                     rc = row['RegCode']
-                    reg_badge = "🟢 강세" if rc==2 else ("🟡 중립" if rc==1 else ("🟠 조정" if rc==0 else "🔴 약세"))
-                    reg_color = "#15803d" if rc==2 else ("#b45309" if rc==1 else "#b91c1c")
+                    if pd.isna(rc):
+                        reg_badge = "❔ 데이터 부족"
+                        reg_color = "#64748b"
+                    elif rc == 2:
+                        reg_badge = "🟢 강세"
+                        reg_color = "#15803d"
+                    elif rc == 1:
+                        reg_badge = "🟡 중립"
+                        reg_color = "#b45309"
+                    elif rc == 0:
+                        reg_badge = "🟠 조정"
+                        reg_color = "#d97706"
+                    else:
+                        reg_badge = "🔴 약세"
+                        reg_color = "#b91c1c"
                     
                     st_type = row['StatusType']
                     if st_type == "BUY":
-                        act_badge = "🟢 내일 시가 매수"
+                        act_badge = "🟢 매수 추천"
                         act_bg = "#dcfce7"; act_fg = "#15803d"
                     elif st_type == "SELL":
-                        act_badge = "🚨 내일 시가 매도"
+                        act_badge = "🔍 논리 점검"
                         act_bg = "#fee2e2"; act_fg = "#b91c1c"
-                    elif "HOLD" in st_type:
+                    elif st_type == "BELIEF_WARN":
+                        act_badge = "📌 논리 점검"
+                        act_bg = "#fce7f3"; act_fg = "#be185d"
+                    elif st_type == "BELIEF_GOOD":
+                        act_badge = "📌 신념 강세"
+                        act_bg = "#ede9fe"; act_fg = "#6d28d9"
+                    elif st_type == "BELIEF_WEAK":
+                        act_badge = "📌 신념 약세"
+                        act_bg = "#f1f5f9"; act_fg = "#64748b"
+                    elif st_type == "HOLD_GOOD":
                         act_badge = "✅ 보유 유지"
                         act_bg = "#eff6ff"; act_fg = "#1d4ed8"
+                    elif st_type == "HOLD_WARN":
+                        act_badge = "⚠️ 보유 약세"
+                        act_bg = "#fef3c7"; act_fg = "#b45309"
+                    elif st_type == "PENDING":
+                        act_badge = "❔ 판정 불가"
+                        act_bg = "#f8fafc"; act_fg = "#64748b"
+                    elif st_type == "PAUSE":
+                        act_badge = "⏸ 슬롯 부족"
+                        act_bg = "#ffedd5"; act_fg = "#c2410c"
                     elif st_type == "WATCH":
                         act_badge = "👀 신호 대기"
                         act_bg = "#fef3c7"; act_fg = "#b45309"
@@ -842,9 +1015,10 @@ with tab_dashboard:
                         act_badge = "⛔ 매수 금지"
                         act_bg = "#f1f5f9"; act_fg = "#64748b"
                         
-                    mom_val = row['Mom'] * 100.0
-                    mom_color = "#e11d48" if mom_val > 0 else "#2563eb"
-                    mom_rank = int(row['MomRank']) if not pd.isna(row['MomRank']) else "-"
+                    mom_val = row['Mom'] * 100.0 if not pd.isna(row['Mom']) else np.nan
+                    mom_color = "#e11d48" if (not pd.isna(mom_val) and mom_val > 0) else ("#2563eb" if (not pd.isna(mom_val) and mom_val < 0) else "#64748b")
+                    mom_str = f"{mom_val:+.1f}%" if not pd.isna(mom_val) else "N/A"
+                    mom_rank = row['MomRank']
                     
                     pnl_val = row['PnL_pct']
                     if pd.isna(pnl_val):
@@ -854,50 +1028,47 @@ with tab_dashboard:
                         pnl_str = f"{pnl_val:+.1f}%"
                         pnl_color = "#e11d48" if pnl_val > 0 else "#2563eb"
                         
+                    belief_tag = '<span style="font-size:0.74rem; background:#ede9fe; color:#6d28d9; padding:1px 5px; border-radius:4px; font-weight:700; margin-left:4px; border:1px solid #ddd6fe;">📌 신념</span>' if row['Belief'] else ""
                     hold_info = f"{row['Qty']:.0f}주 보유" if row['Qty'] > 0 else "미보유"
+                    price_str = f"${row['Close']:,.2f}" if not pd.isna(row['Close']) else "N/A"
+                    brk_str = f"${row['Brk']:,.1f} ({row['DistBrk']:+.1f}%)" if not pd.isna(row['Brk']) else "N/A"
                     
                     with col_target:
-                        st.markdown(f"""
+                        card_html = f"""
                         <div class="mobile-stock-card">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <span style="font-weight: 700; font-size: 0.98rem; color: #0f172a;">{kr_name} <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">({sym})</span></span>
+                                <span style="font-weight: 700; font-size: 0.98rem; color: #0f172a;">{kr_name} <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">({sym})</span>{belief_tag}</span>
                                 <span style="font-size: 0.78rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #f8fafc; border: 1px solid #e2e8f0; color: {reg_color};">{reg_badge}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
                                 <div>
-                                    <span style="font-size: 1.22rem; font-weight: 800; color: #0f172a;">${row['Close']:,.2f}</span>
+                                    <span style="font-size: 1.22rem; font-weight: 800; color: #0f172a;">{price_str}</span>
                                     <span style="font-size: 0.78rem; color: #64748b; margin-left: 6px;">({hold_info})</span>
                                 </div>
                                 <span style="font-size: 0.8rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background-color: {act_bg}; color: {act_fg};">{act_badge}</span>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: #f8fafc; padding: 8px 10px; border-radius: 6px; font-size: 0.78rem; border: 1px solid #f1f5f9;">
-                                <div><span style="color: #64748b;">6M 모멘텀</span><br/><b style="color: {mom_color};">{mom_val:+.1f}% ({mom_rank}위)</b></div>
-                                <div><span style="color: #64748b;">붕괴선 거리</span><br/><b>${row['Brk']:,.1f} ({row['DistBrk']:+.1f}%)</b></div>
+                                <div><span style="color: #64748b;">모멘텀</span><br/><b style="color: {mom_color};">{mom_str} ({mom_rank}위)</b></div>
+                                <div><span style="color: #64748b;">붕괴선</span><br/><b>{brk_str}</b></div>
                                 <div><span style="color: #64748b;">내 손익률</span><br/><b style="color: {pnl_color};">{pnl_str}</b></div>
                             </div>
                         </div>
-                        """, unsafe_allow_html=True)
+                        """
+                        render_html(card_html)
         else:
             disp_df = filtered_status.copy()
+            disp_df['구분'] = disp_df['Belief'].apply(lambda b: "📌 신념" if b else "💼 시스템")
             disp_df['종목 (한글 / 영문 / 티커)'] = disp_df['Symbol'].apply(get_stock_label)
-            disp_df['현재가'] = disp_df['Close'].apply(lambda x: f"${x:,.2f}")
-            disp_df['국면'] = disp_df['RegCode'].apply(lambda x: "🟢 강세" if x==2 else ("🟡 중립" if x==1 else ("🟠 조정" if x==0 else "🔴 약세")))
+            disp_df['현재가'] = disp_df['Close'].apply(lambda x: f"${x:,.2f}" if not pd.isna(x) else "N/A")
+            disp_df['국면'] = disp_df['RegCode'].apply(lambda x: "🟢 강세" if x==2 else ("🟡 중립" if x==1 else ("🟠 조정" if x==0 else ("🔴 약세" if x==-1 else "❔ 데이터 부족"))))
             disp_df['오늘 신호'] = disp_df['Sig'].apply(lambda x: "A 지지반등" if x==1 else ("B 눌림회복" if x==2 else ("C 골든크로스" if x==3 else "-")))
-            disp_df['붕괴선'] = disp_df.apply(lambda r: f"${r['Brk']:,.2f} ({r['DistBrk']:+.1f}%)", axis=1)
-            disp_df['6M 모멘텀'] = disp_df['Mom'] * 100.0
-            disp_df['내 보유 손익률'] = disp_df['PnL_pct']
-            disp_df['보유현황'] = disp_df.apply(lambda r: f"{r['Qty']:.0f}주 @ ${r['Avg']:,.2f}" if r['Qty']>0 else "-", axis=1)
+            disp_df['붕괴선 (거리)'] = disp_df.apply(lambda r: f"${r['Brk']:,.2f} ({r['DistBrk']:+.1f}%)" if not pd.isna(r['Brk']) else "N/A", axis=1)
+            disp_df['모멘텀 (순위)'] = disp_df.apply(lambda r: f"{r['Mom']*100.0:+.1f}% ({r['MomRank']}위)" if not pd.isna(r['Mom']) else "N/A", axis=1)
+            disp_df['내 보유 (손익)'] = disp_df.apply(lambda r: f"{r['Qty']:.0f}주 @ ${r['Avg']:,.2f} ({r['PnL_pct']:+.1f}%)" if r['Qty']>0 and not pd.isna(r['PnL_pct']) else (f"{r['Qty']:.0f}주" if r['Qty']>0 else "-"), axis=1)
             disp_df['행동 가이드'] = disp_df['Action']
             
-            show_cols = ['종목 (한글 / 영문 / 티커)', '현재가', '국면', '오늘 신호', '붕괴선', '6M 모멘텀', '보유현황', '내 보유 손익률', '행동 가이드']
-            view_table = disp_df[show_cols]
-            
-            styled_view = view_table.style.format({
-                '6M 모멘텀': lambda x: f"{x:+.1f}%" if not pd.isna(x) else "-",
-                '내 보유 손익률': lambda x: f"{x:+.1f}%" if not pd.isna(x) else "-"
-            }).map(style_pnl_val, subset=['6M 모멘텀', '내 보유 손익률'])
-            
-            st.dataframe(styled_view, use_container_width=True, hide_index=True)
+            cols_show = ['구분', '종목 (한글 / 영문 / 티커)', '현재가', '국면', '오늘 신호', '붕괴선 (거리)', '모멘텀 (순위)', '내 보유 (손익)', '행동 가이드']
+            st.dataframe(disp_df[cols_show], use_container_width=True, hide_index=True)
     else:
         st.warning("등록된 종목이 없습니다. [⚙️ 설정] 탭에서 종목을 추가하세요.")
 
@@ -959,6 +1130,14 @@ with tab_theme:
         time_sort = st.selectbox("모멘텀 정렬 기준", ["오늘 (1일)", "최근 1주일 (5일)", "최근 1개월 (20일)"], index=0, help="순위를 매길 기간을 선택합니다.")
     with col_f3:
         search_kw = st.text_input("테마 또는 종목 검색 (한글/영문/티커 전부 가능, 예: 엔비디아, Tesla, 원자력)", "", help="한글, 영문, 티커 상관없이 검색됩니다.").strip()
+        if search_kw:
+            preview_matches = []
+            for s, meta in STOCK_META.items():
+                if search_kw.lower() in s.lower() or search_kw.lower() in meta.get('kr', '').lower() or search_kw.lower() in meta.get('en', '').lower():
+                    preview_matches.append(s)
+            if preview_matches:
+                st.caption(f"💡 연관 추천 종목 ({len(preview_matches)}건):")
+                st.pills("연관 종목", options=preview_matches[:6], format_func=get_stock_short_label, label_visibility="collapsed", key="tab2_preview_pills")
         
     filtered_df = t_summary_df.copy()
     if selected_cat != "전체":
@@ -985,22 +1164,22 @@ with tab_theme:
     
     s_col1, s_col2 = st.columns(2)
     with s_col1:
-        in_str = " | ".join([f"**{r['테마'].split(' ')[0]} {r['테마'].split(' ')[1]}** ({r[sort_col]:+.2f}%)" for _, r in top_inflow.iterrows()])
-        st.markdown(f"""
+        in_str = " | ".join([f"<b>{r['테마'].split(' ')[0]} {r['테마'].split(' ')[1]}</b> ({r[sort_col]:+.2f}%)" for _, r in top_inflow.iterrows()])
+        render_html(f"""
         <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; padding:12px 16px; margin-bottom:12px;">
             <b style="color:#e11d48; font-size:0.95rem;">🔥 자금 급유입 TOP 3 (돈이 몰리는 주도 테마)</b>
             <div style="margin-top:4px; font-size:0.92rem; color:#0f172a;">{in_str}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
         
     with s_col2:
-        out_str = " | ".join([f"**{r['테마'].split(' ')[0]} {r['테마'].split(' ')[1]}** ({r[sort_col]:+.2f}%)" for _, r in top_outflow.iterrows()])
-        st.markdown(f"""
+        out_str = " | ".join([f"<b>{r['테마'].split(' ')[0]} {r['테마'].split(' ')[1]}</b> ({r[sort_col]:+.2f}%)" for _, r in top_outflow.iterrows()])
+        render_html(f"""
         <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 16px; margin-bottom:12px;">
             <b style="color:#2563eb; font-size:0.95rem;">🧊 자금 급유출 TOP 3 (돈이 빠져나가는 소외 테마)</b>
             <div style="margin-top:4px; font-size:0.92rem; color:#0f172a;">{out_str}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
 
     # 2. 유입 vs 유출 나란히 2단 차트 (좌측: 돈 몰리는 곳, 우측: 돈 빠지는 곳)
     c_chart_in, c_chart_out = st.columns(2)
@@ -1040,12 +1219,13 @@ with tab_theme:
         t_obj = current_themes.get(selected_theme_name, {})
         if t_obj:
             names_str = ", ".join([get_stock_short_label(s) for s in t_obj['symbols']])
-            st.markdown(f"""
+            render_html(f"""
             <div class="theme-header">
                 <h4 style="margin:0; color:#0f172a;">{selected_theme_name}</h4>
                 <p style="margin:4px 0 0 0; color:#475569; font-size:0.9rem;">{t_obj['desc']}</p>
                 <small style="color:#64748b;">분야: {t_obj.get('cat','')} | 구성 종목: {names_str}</small>
-            </div>""", unsafe_allow_html=True)
+            </div>
+            """)
             
             t_rows = []
             for s in t_obj['symbols']:
@@ -1153,8 +1333,27 @@ with tab_chart:
     available_symbols = list(ind_dict.keys())
     if available_symbols:
         chart_options = {get_stock_label(s): s for s in available_symbols}
-        selected_chart_label = st.selectbox("분석할 종목을 선택하세요 (한글/영문/티커)", list(chart_options.keys()), index=0)
+        selected_chart_label = st.selectbox(
+            "분석할 종목을 선택하세요 (한글/영문/티커)",
+            list(chart_options.keys()),
+            index=0,
+            help="드롭다운을 누르고 '엔비', '테슬' 등을 타이핑하면 원하는 종목으로 바로 이동합니다."
+        )
         selected_sym = chart_options[selected_chart_label]
+        
+        if len(available_symbols) <= 12:
+            st.caption("⚡ **원터치 빠른 종목 전환:**")
+            quick_p = st.pills(
+                "빠른 종목 선택",
+                options=available_symbols,
+                format_func=get_stock_short_label,
+                default=selected_sym,
+                label_visibility="collapsed",
+                key="tab3_pills_picker"
+            )
+            if quick_p and quick_p != selected_sym:
+                selected_sym = quick_p
+                
         df_target = ind_dict[selected_sym].tail(250).copy()
         
         # 보조지표 계산
@@ -1188,47 +1387,50 @@ with tab_chart:
         macd_sig = macd_line.ewm(span=9, adjust=False).mean()
         macd_hist = macd_line - macd_sig
         
-        # ===== 보조지표 On/Off 설정 (접이식으로 모바일 화면 대폭 절약) =====
-        with st.expander("🛠️ 보조지표 On / Off 설정 (클릭하여 열기)", expanded=False):
-            tog_c1, tog_c2, tog_c3 = st.columns(3)
-            with tog_c1:
-                t_strat = st.checkbox("전략선 (200선/붕괴선)", value=True, help="200일선과 -3% 붕괴 손절선을 표시합니다.")
-                t_vol = st.checkbox("거래량 (Volume)", value=True, help="일별 거래량 바 차트를 표시합니다.")
-            with tog_c2:
-                t_bb = st.checkbox("볼린저 밴드 (20, 2)", value=False, help="20일 기준 표준편차 ±2 밴드를 표시합니다.")
-                t_rsi = st.checkbox("RSI (14)", value=True, help="과열(70)과 과매도(30)를 감지하는 RSI 보조지표를 표시합니다.")
-            with tog_c3:
-                t_emas = st.checkbox("이평선 (5/60/120선)", value=False, help="5일(초단기), 60일(중기), 120일(경기선)을 표시합니다.")
-                t_macd = st.checkbox("MACD (12,26,9)", value=False, help="추세 전환과 골든크로스를 감지하는 MACD를 표시합니다.")
+        # ===== 보조지표 On/Off 토글 컨트롤 바 =====
+        st.markdown("**🛠️ 보조지표 On / Off 토글:**")
+        tog_c1, tog_c2, tog_c3, tog_c4, tog_c5, tog_c6 = st.columns(6)
+        with tog_c1:
+            t_strat = st.checkbox("전략선 (200선/붕괴선)", value=True, help="200일선과 -3% 붕괴 손절선을 표시합니다.")
+        with tog_c2:
+            t_bb = st.checkbox("볼린저 밴드 (20, 2)", value=False, help="20일 기준 표준편차 ±2 밴드를 표시합니다.")
+        with tog_c3:
+            t_emas = st.checkbox("이평선 (5/60/120선)", value=False, help="5일(초단기), 60일(중기), 120일(경기선)을 표시합니다.")
+        with tog_c4:
+            t_vol = st.checkbox("거래량 (Volume)", value=True, help="일별 거래량 바 차트를 표시합니다.")
+        with tog_c5:
+            t_rsi = st.checkbox("RSI (14)", value=False, help="과열(70)과 과매도(30)를 감지하는 RSI 보조지표를 표시합니다.")
+        with tog_c6:
+            t_macd = st.checkbox("MACD (12,26,9)", value=False, help="추세 전환과 골든크로스를 감지하는 MACD를 표시합니다.")
 
-        # 서브플롯 동적 행 구성
+        # 서브플롯 동적 행 구성 및 높이 정규화
         subplot_titles = ["<b>주가 (일봉 캔들)</b>"]
-        row_heights = [0.60]
         n_rows = 1
-        
         row_map = {}
         if t_vol:
             n_rows += 1
             row_map['vol'] = n_rows
             subplot_titles.append("<b>거래량</b>")
-            row_heights.append(0.14)
         if t_rsi:
             n_rows += 1
             row_map['rsi'] = n_rows
             subplot_titles.append("<b>RSI (14)</b>")
-            row_heights.append(0.14)
         if t_macd:
             n_rows += 1
             row_map['macd'] = n_rows
             subplot_titles.append("<b>MACD (12, 26, 9)</b>")
-            row_heights.append(0.14)
             
-        # 모바일 친화적 차트 높이 동적 조절 (과도한 스크롤 방지)
-        total_height = 410 + (n_rows - 1) * 95
-        
+        if n_rows == 1:
+            row_heights = [1.0]
+            total_height = 460
+        else:
+            sub_h = 0.35 / (n_rows - 1)
+            row_heights = [0.65] + [sub_h] * (n_rows - 1)
+            total_height = 420 + (n_rows - 1) * 110
+            
         fig_c = make_subplots(
             rows=n_rows, cols=1, shared_xaxes=True,
-            vertical_spacing=0.035, row_heights=row_heights,
+            vertical_spacing=0.04, row_heights=row_heights,
             subplot_titles=subplot_titles
         )
         
@@ -1294,19 +1496,26 @@ with tab_chart:
         # 하단 AI 종합 기술적 진단 요약 박스
         last_item = df_target.iloc[-1]
         c_val = last_item['Close']; s200_val = last_item['SMA200']
-        dist_sma = (c_val / s200_val - 1.0) * 100.0
+        dist_sma = (c_val / s200_val - 1.0) * 100.0 if (not pd.isna(s200_val) and s200_val > 0) else np.nan
         last_rsi = rsi.iloc[-1] if not rsi.empty else np.nan
         last_macd_h = macd_hist.iloc[-1] if not macd_hist.empty else np.nan
         
-        rsi_comment = "과열권 (차익실현 주의)" if last_rsi >= 70 else ("과매도권 (기술적 반등 기대)" if last_rsi <= 30 else "안정적 중립 구간")
-        macd_comment = "매수 우위 (양의 모멘텀)" if last_macd_h > 0 else "조정/매도 우위 (음의 모멘텀)"
+        rsi_comment = "과열권 (차익실현 주의)" if (not pd.isna(last_rsi) and last_rsi >= 70) else ("과매도권 (기술적 반등 기대)" if (not pd.isna(last_rsi) and last_rsi <= 30) else "안정적 중립 구간")
+        macd_comment = "매수 우위 (양의 모멘텀)" if (not pd.isna(last_macd_h) and last_macd_h > 0) else "조정/매도 우위 (음의 모멘텀)"
+        
+        c_str = f"${c_val:,.2f}" if not pd.isna(c_val) else "-"
+        s200_str = f"${s200_val:,.2f}" if not pd.isna(s200_val) else "계산중"
+        dist_str = f"{dist_sma:+.1f}%" if not pd.isna(dist_sma) else "-"
+        brk_str = f"${last_item['Brk']:,.2f}" if not pd.isna(last_item['Brk']) else "계산중"
+        rsi_str = f"{last_rsi:.1f}" if not pd.isna(last_rsi) else "-"
+        macd_str = f"{last_macd_h:+.2f}" if not pd.isna(last_macd_h) else "-"
         
         st.markdown(f"""
         > 💡 **{get_stock_short_label(selected_sym)} 실시간 기술적 진단 리포트:**
-        > - **200일선 이격도:** 현재가 **${c_val:,.2f}**는 200일선(${s200_val:,.2f}) 대비 **{dist_sma:+.1f}%** 위치에 있습니다.
-        > - **붕괴 방어선:** **${last_item['Brk']:,.2f}** (2일 연속 이탈 시 원칙 손절)
-        > - **RSI(14):** **{last_rsi:.1f}** 👉 **{rsi_comment}**
-        > - **MACD 모멘텀:** **{macd_comment}** (오실레이터: {last_macd_h:+.2f})
+        > - **200일선 이격도:** 현재가 **{c_str}**는 200일선({s200_str}) 대비 **{dist_str}** 위치에 있습니다.
+        > - **붕괴 방어선:** **{brk_str}** (2일 연속 이탈 시 원칙 손절)
+        > - **RSI(14):** **{rsi_str}** 👉 **{rsi_comment}**
+        > - **MACD 모멘텀:** **{macd_comment}** (오실레이터: {macd_str})
         """)
     else:
         st.info("차트를 표시할 종목 데이터가 없습니다.")
@@ -1328,21 +1537,30 @@ with tab_backtest:
             - **승률 (Win Rate):** 전체 매매 중 이익으로 청산된 거래의 비율입니다.
             """)
             
-    def run_sim(ind_dict, common_idx, max_pos, cost_pct):
+    def run_sim(ind_dict, common_idx, max_pos, cost_pct, cash_yield=0.0):
         cash = 100.0; equity = 100.0
         sh = {s: 0.0 for s in ind_dict}; e_px = {s: np.nan for s in ind_dict}; e_cost = {s: 0.0 for s in ind_dict}
         e_date = {s: None for s in ind_dict}; p_buy = {s: False for s in ind_dict}; p_sell = {s: False for s in ind_dict}
         trades = []; daily_eq = []; daily_ew = []; ew_eq = 100.0; prev_p = {}
+        daily_exposure = []
+        gross_p = 0.0; gross_l = 0.0
+        
         for dt in common_idx:
+            if cash_yield > 0:
+                cash *= (1.0 + cash_yield / 100.0 / 252.0)
+                
             for s in ind_dict:
                 if p_sell[s]:
                     q = sh[s]
                     if q > 0 and dt in ind_dict[s].index:
                         px = ind_dict[s].loc[dt, 'Open']
                         proc = q * px * (1.0 - cost_pct); pnl = proc - e_cost[s]
+                        if pnl > 0: gross_p += pnl
+                        else: gross_l += abs(pnl)
                         trades.append({'Symbol': s, 'EntryDate': e_date[s], 'ExitDate': dt, 'PnL_pct': (proc / e_cost[s] - 1.0) * 100.0, 'HoldDays': (dt - e_date[s]).days if e_date[s] else 0, 'PnL': pnl})
                         cash += proc; sh[s] = 0.0; e_cost[s] = 0.0
                     p_sell[s] = False
+                    
             for s in ind_dict:
                 if p_buy[s]:
                     if dt in ind_dict[s].index:
@@ -1351,6 +1569,7 @@ with tab_backtest:
                             q = bud / (px * (1.0 + cost_pct)); cost = q * px * (1.0 + cost_pct)
                             cash -= cost; sh[s] = q; e_cost[s] = cost; e_date[s] = dt
                     p_buy[s] = False
+                    
             pos_val = 0.0; held_n = 0; ew_day = []
             for s in ind_dict:
                 if dt in ind_dict[s].index:
@@ -1361,14 +1580,17 @@ with tab_backtest:
                         ew_day.append(c / prev_p[s] - 1.0)
                     prev_p[s] = c
             equity = cash + pos_val; daily_eq.append(equity)
+            daily_exposure.append(pos_val / equity * 100.0 if equity > 0 else 0.0)
             if ew_day:
                 ew_eq *= (1.0 + np.mean(ew_day))
             daily_ew.append(ew_eq)
+            
             n_sell = 0
             for s in ind_dict:
                 if sh[s] > 0 and dt in ind_dict[s].index:
                     if ind_dict[s].loc[dt, 'Broken']:
                         p_sell[s] = True; n_sell += 1
+                        
             free_slots = max_pos - held_n + n_sell
             if free_slots > 0:
                 cands = []
@@ -1380,24 +1602,33 @@ with tab_backtest:
                 cands.sort(key=lambda x: x[1] if not np.isnan(x[1]) else -999, reverse=True)
                 for cand in cands[:free_slots]:
                     p_buy[cand[0]] = True
-        return pd.DataFrame({'Date': common_idx, 'Strategy': daily_eq, 'EqualWeight': daily_ew}).set_index('Date'), pd.DataFrame(trades)
+                    
+        res_df = pd.DataFrame({'Date': common_idx, 'Strategy': daily_eq, 'EqualWeight': daily_ew, 'Exposure': daily_exposure}).set_index('Date')
+        stats_extra = {'gross_p': gross_p, 'gross_l': gross_l}
+        return res_df, pd.DataFrame(trades), stats_extra
 
     if ind_dict and len(common_idx) > 20:
-        sim_res, t_df = run_sim(ind_dict, common_idx, cfg['max_pos'], cfg['cost_pct']/100.0)
+        sim_res, t_df, s_extra = run_sim(ind_dict, common_idx, cfg['max_pos'], cfg['cost_pct']/100.0, cfg.get('cash_yield', 0.0))
         spy_c = spy_df.loc[common_idx, 'Close']
         sim_res['SPY'] = spy_c / spy_c.iloc[0] * 100.0
         
         def get_stat(series):
+            if len(series) < 5:
+                return np.nan, np.nan, np.nan
             yrs = (series.index[-1] - series.index[0]).days / 365.25
             cagr = ((series.iloc[-1] / series.iloc[0]) ** (1.0 / yrs) - 1.0) * 100.0 if yrs >= 0.5 else np.nan
             mdd = ((series / series.cummax() - 1.0) * 100.0).min()
-            calmar = abs(cagr / mdd) if mdd < 0 else np.nan
+            calmar = abs(cagr / mdd) if (mdd < 0 and not pd.isna(cagr)) else np.nan
             return cagr, mdd, calmar
             
         c_s, m_s, cal_s = get_stat(sim_res['Strategy'])
         c_e, m_e, cal_e = get_stat(sim_res['EqualWeight'])
         c_b, m_b, cal_b = get_stat(sim_res['SPY'])
+        
         win_r = (t_df['PnL'] > 0).mean() * 100.0 if not t_df.empty else 0.0
+        pf = s_extra['gross_p'] / s_extra['gross_l'] if s_extra['gross_l'] > 0 else np.nan
+        avg_exp = sim_res['Exposure'].mean() if 'Exposure' in sim_res.columns else 0.0
+        avg_hold = t_df['HoldDays'].mean() if not t_df.empty else 0.0
         
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("전략 연평균 수익률 (CAGR)", f"{c_s:.1f}%", f"{c_s - c_b:+.1f}% vs SPY")
@@ -1405,6 +1636,43 @@ with tab_backtest:
         m3.metric("칼마 비율 (수익/위험)", f"{cal_s:.2f}", f"{cal_s - cal_b:+.2f} vs SPY")
         m4.metric("승률 (Win Rate)", f"{win_r:.1f}%", f"총 {len(t_df)}회 거래")
         
+        # Pine Script v1.3 스타일 핵심 성과 요약 배너
+        pf_str = f"{pf:.2f}" if not pd.isna(pf) else "-"
+        st.markdown(f"""
+        <div style="background:#f1f5f9; border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:0.9rem; color:#334155; border:1px solid #e2e8f0;">
+            📊 <b>실전 통계:</b> 평균 투자비중 <b>{avg_exp:.0f}%</b> · 총 거래 <b>{len(t_df)}회</b> · 승률 <b>{win_r:.1f}%</b> · Profit Factor <b>{pf_str}</b> · 평균 보유일수 <b>{avg_hold:.0f}일</b>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # OOS 검증 기간 비교 (oos_year 설정 시)
+        oos_yr = cfg.get('oos_year', 2020)
+        if oos_yr > 0 and common_idx[-1].year >= oos_yr:
+            oos_dt = pd.to_datetime(f"{oos_yr}-01-01")
+            is_strat = sim_res['Strategy'].loc[sim_res.index < oos_dt]
+            oos_strat = sim_res['Strategy'].loc[sim_res.index >= oos_dt]
+            is_ew = sim_res['EqualWeight'].loc[sim_res.index < oos_dt]
+            oos_ew = sim_res['EqualWeight'].loc[sim_res.index >= oos_dt]
+            is_spy = sim_res['SPY'].loc[sim_res.index < oos_dt]
+            oos_spy = sim_res['SPY'].loc[sim_res.index >= oos_dt]
+            
+            _, _, cal_is_s = get_stat(is_strat)
+            c_oos_s, m_oos_s, cal_oos_s = get_stat(oos_strat)
+            _, _, cal_is_e = get_stat(is_ew)
+            c_oos_e, m_oos_e, cal_oos_e = get_stat(oos_ew)
+            _, _, cal_is_b = get_stat(is_spy)
+            c_oos_b, m_oos_b, cal_oos_b = get_stat(oos_spy)
+            
+            cmp_data = [
+                {"지표": "CAGR (전체)", "전략": f"{c_s:+.1f}%", "동일비중(EW)": f"{c_e:+.1f}%", "SPY 지수": f"{c_b:+.1f}%"},
+                {"지표": "MDD (최대낙폭)", "전략": f"{m_s:.1f}%", "동일비중(EW)": f"{m_e:.1f}%", "SPY 지수": f"{m_b:.1f}%"},
+                {"지표": "Calmar (전체)", "전략": f"{cal_s:.2f}", "동일비중(EW)": f"{cal_e:.2f}", "SPY 지수": f"{cal_b:.2f}"},
+                {"지표": f"Calmar IS (~{oos_yr-1}년)", "전략": f"{cal_is_s:.2f}" if not pd.isna(cal_is_s) else "-", "동일비중(EW)": f"{cal_is_e:.2f}" if not pd.isna(cal_is_e) else "-", "SPY 지수": f"{cal_is_b:.2f}" if not pd.isna(cal_is_b) else "-"},
+                {"지표": f"Calmar OOS ({oos_yr}년~)", "전략": f"{cal_oos_s:.2f}" if not pd.isna(cal_oos_s) else "-", "동일비중(EW)": f"{cal_oos_e:.2f}" if not pd.isna(cal_oos_e) else "-", "SPY 지수": f"{cal_oos_b:.2f}" if not pd.isna(cal_oos_b) else "-"},
+                {"지표": f"CAGR OOS ({oos_yr}년~)", "전략": f"{c_oos_s:+.1f}%" if not pd.isna(c_oos_s) else "-", "동일비중(EW)": f"{c_oos_e:+.1f}%" if not pd.isna(c_oos_e) else "-", "SPY 지수": f"{c_oos_b:+.1f}%" if not pd.isna(c_oos_b) else "-"},
+                {"지표": f"MDD OOS ({oos_yr}년~)", "전략": f"{m_oos_s:.1f}%" if not pd.isna(m_oos_s) else "-", "동일비중(EW)": f"{m_oos_e:.1f}%" if not pd.isna(m_oos_e) else "-", "SPY 지수": f"{m_oos_b:.1f}%" if not pd.isna(m_oos_b) else "-"},
+            ]
+            st.dataframe(pd.DataFrame(cmp_data), use_container_width=True, hide_index=True)
+            
         fig_s = go.Figure()
         fig_s.add_trace(go.Scatter(x=sim_res.index, y=sim_res['Strategy'], name='순환 스윙 전략', line=dict(color='#e11d48', width=2.5)))
         fig_s.add_trace(go.Scatter(x=sim_res.index, y=sim_res['EqualWeight'], name='바스켓 단순보유 (EW)', line=dict(color='#2563eb', width=1.5)))
@@ -1521,7 +1789,7 @@ with tab_macro:
             </div>
             """
             
-        st.markdown(f"""
+        grid_cards_html = f"""
         <div class="macro-4card-grid">
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; text-align: center;">
                 <span style="font-size: 0.78rem; color: #166534; font-weight: 600;">🏦 은행 정기예금 (기준)</span><br/>
@@ -1536,7 +1804,8 @@ with tab_macro:
             {c3_html}
             {c4_html}
         </div>
-        """, unsafe_allow_html=True)
+        """
+        render_html(grid_cards_html)
                 
         st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
         
@@ -1651,7 +1920,7 @@ with tab_macro:
             </table>
         </div>
         """
-        st.markdown(table_html, unsafe_allow_html=True)
+        render_html(table_html)
         
         st.markdown(f"""
         > 💡 **실전 투자 교훈 & 인사이트:**
@@ -1688,20 +1957,78 @@ with tab_settings:
             st.rerun()
             
     with col_add:
-        st.markdown("**🔍 종목 빠른 추가 (한글/영문/티커 전부 가능)**")
-        new_input = st.text_input("추가할 종목 (예: 엔비디아, Tesla, AAPL)", "", help="한글명이나 영문명, 티커 중 아무거나 입력하세요.").strip()
-        new_qty = st.number_input("내 보유 수량", min_value=0.0, value=0.0, step=1.0)
-        new_avg = st.number_input("내 평단가 ($)", min_value=0.0, value=0.0, step=0.1)
-        if st.button("➕ 바스켓에 종목 추가", type="primary", use_container_width=True):
-            if new_input:
-                resolved_ticker = resolve_ticker_input(new_input)
+        st.markdown("**🔍 종목 실시간 검색 & 자동완성 추가**")
+        search_kw = st.text_input(
+            "종목 이름 또는 티커 검색 (일부만 쳐보세요)",
+            value="",
+            placeholder="예: 엔비, 테슬, 일라이, 비만, 양자, NV, AAPL...",
+            help="한글 초성이나 단어 일부만 입력해도 일치하는 종목이 실시간으로 검색됩니다."
+        ).strip()
+        
+        # 1. 일치하는 종목 검색 (Fuzzy match in STOCK_META)
+        matched_syms = []
+        if search_kw:
+            kw_low = search_kw.lower()
+            for sym, meta in STOCK_META.items():
+                kr_name = meta.get('kr', '')
+                en_name = meta.get('en', '')
+                if kw_low in sym.lower() or kw_low in kr_name.lower() or kw_low in en_name.lower():
+                    matched_syms.append(sym)
+                    
+        # 2. 자동완성 미리보기 및 선택
+        target_ticker = None
+        if matched_syms:
+            if len(matched_syms) <= 8:
+                selected_pill = st.pills(
+                    f"👇 일치하는 추천 종목 ({len(matched_syms)}건) 터치하여 선택:",
+                    options=matched_syms,
+                    format_func=get_stock_short_label,
+                    default=matched_syms[0],
+                    key="tab6_matched_pills"
+                )
+                target_ticker = selected_pill if selected_pill else matched_syms[0]
+            else:
+                cand_options = {get_stock_label(s): s for s in matched_syms}
+                selected_cand_label = st.selectbox(
+                    f"👇 일치하는 추천 종목 ({len(matched_syms)}건) 중 선택",
+                    list(cand_options.keys()), index=0
+                )
+                target_ticker = cand_options[selected_cand_label]
+            st.caption(f"✅ 선택된 종목: **{get_stock_label(target_ticker)}**")
+        elif search_kw:
+            target_ticker = resolve_ticker_input(search_kw)
+            st.info(f"💡 등록 사전에 없는 종목입니다. 해외 티커 **'{target_ticker}'**(으)로 직접 추가됩니다.")
+        else:
+            all_sym_opts = {"(검색어를 입력하거나 전체 목록에서 선택하세요)": ""}
+            for s in sorted(STOCK_META.keys()):
+                all_sym_opts[get_stock_label(s)] = s
+            quick_pick_label = st.selectbox(
+                "또는 전체 인기 우량주(80여 개) 목록에서 선택",
+                list(all_sym_opts.keys()), index=0
+            )
+            target_ticker = all_sym_opts[quick_pick_label]
+
+        c_q, c_a, c_b = st.columns(3)
+        with c_q:
+            new_qty = st.number_input("내 보유 수량", min_value=0.0, value=0.0, step=1.0)
+        with c_a:
+            new_avg = st.number_input("내 평단가 ($)", min_value=0.0, value=0.0, step=0.1)
+        with c_b:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            new_belief = st.checkbox("📌 신념 보유 (슬롯 미차감)", value=False, help="체크 시 장기 가치관으로 보유하는 종목으로 지정되어 시스템 스윙 슬롯을 차지하지 않습니다.")
+
+        btn_enabled = bool(target_ticker)
+        btn_text = f"➕ '{get_stock_short_label(target_ticker)}' 바스켓에 추가하기" if target_ticker else "➕ 종목을 먼저 선택해 주세요"
+        
+        if st.button(btn_text, type="primary", use_container_width=True, disabled=(not btn_enabled)):
+            if target_ticker:
                 existing = [x['symbol'] for x in st.session_state.basket]
-                if resolved_ticker in existing:
-                    st.warning(f"이미 바스켓에 존재하는 종목입니다: {get_stock_label(resolved_ticker)}")
+                if target_ticker in existing:
+                    st.warning(f"이미 바스켓에 존재하는 종목입니다: {get_stock_label(target_ticker)}")
                 else:
-                    st.session_state.basket.append({"symbol": resolved_ticker, "use": True, "qty": new_qty, "avg": new_avg})
+                    st.session_state.basket.append({"symbol": target_ticker, "use": True, "qty": new_qty, "avg": new_avg, "belief": new_belief})
                     save_basket_to_disk(st.session_state.basket)
-                    st.success(f"{get_stock_label(resolved_ticker)} 종목이 추가 및 영구 저장되었습니다!")
+                    st.success(f"'{get_stock_label(target_ticker)}' 종목이 바스켓에 영구 추가되었습니다!")
                     st.rerun()
 
     st.markdown("---")
@@ -1717,7 +2044,7 @@ with tab_settings:
             if st.button("🔄 이 파일로 바스켓 자동 덮어쓰기"):
                 new_b = []
                 for _, r in up_df.iterrows():
-                    new_b.append({"symbol": str(r[col_map_t]).strip().upper(), "use": True, "qty": float(r[col_map_q]), "avg": float(r[col_map_a])})
+                    new_b.append({"symbol": str(r[col_map_t]).strip().upper(), "use": True, "qty": float(r[col_map_q]), "avg": float(r[col_map_a]), "belief": False})
                 st.session_state.basket = new_b
                 save_basket_to_disk(st.session_state.basket)
                 st.success("엑셀 파일이 성공적으로 영구 등록되었습니다!")
@@ -1729,13 +2056,16 @@ with tab_settings:
     st.markdown("**📝 현재 바스켓 목록 직접 편집**")
     b_df = pd.DataFrame(st.session_state.basket)
     b_df['회사명 (한글/영문)'] = b_df['symbol'].apply(get_stock_short_label)
-    cols_order = ['symbol', '회사명 (한글/영문)', 'use', 'qty', 'avg']
+    if 'belief' not in b_df.columns:
+        b_df['belief'] = False
+    cols_order = ['symbol', '회사명 (한글/영문)', 'use', 'belief', 'qty', 'avg']
     ed_df = st.data_editor(
         b_df[cols_order],
         column_config={
             "symbol": st.column_config.TextColumn("티커"),
             "회사명 (한글/영문)": st.column_config.TextColumn("회사명 (한글/영문)", disabled=True),
             "use": st.column_config.CheckboxColumn("활성화", default=True),
+            "belief": st.column_config.CheckboxColumn("📌 신념 보유", default=False, help="신념 보유 종목은 시스템 슬롯을 차지하지 않으며, 붕괴선 이탈 시 '논리 점검'으로 표시됩니다."),
             "qty": st.column_config.NumberColumn("내 보유 수량", min_value=0.0),
             "avg": st.column_config.NumberColumn("평단가 ($)", min_value=0.0)
         },
@@ -1747,6 +2077,7 @@ with tab_settings:
             clean_records.append({
                 "symbol": r['symbol'],
                 "use": r.get('use', True),
+                "belief": bool(r.get('belief', False)),
                 "qty": float(r.get('qty', 0.0)),
                 "avg": float(r.get('avg', 0.0))
             })
@@ -1760,23 +2091,32 @@ with tab_settings:
     cfg_col1, cfg_col2, cfg_col3 = st.columns(3)
     with cfg_col1:
         n_max_pos = st.number_input("동시 보유 슬롯 수 (K)", min_value=1, max_value=20, value=cfg['max_pos'])
-        n_start_year = st.selectbox("시뮬레이션 시작 연도", [2010, 2015, 2018, 2020, 2022], index=[2010, 2015, 2018, 2020, 2022].index(cfg['start_year']))
+        year_options = [2000, 2006, 2010, 2015, 2018, 2020]
+        cur_yr = cfg.get('start_year', 2006)
+        yr_idx = year_options.index(cur_yr) if cur_yr in year_options else 1
+        n_start_year = st.selectbox("시뮬레이션 시작 연도", year_options, index=yr_idx)
         n_cost = st.number_input("거래 비용 (편도 %)", min_value=0.0, max_value=1.0, value=cfg['cost_pct'], step=0.01)
+        n_acct = st.number_input("스윙 계좌 총액 ($)", min_value=0.0, value=float(cfg.get('acct_usd', 0.0)), step=1000.0, help="0이면 수량 미표시. 금액 입력 시 매수 후보에 슬롯 금액(총액/K) 기준 매수 예상 수량을 자동 표시합니다.")
     with cfg_col2:
         n_sma = st.number_input("국면 SMA 기간", value=cfg['sma_len'], min_value=50, max_value=300)
         n_slope = st.number_input("기울기 확인 기간 (일)", value=cfg['slope_len'], min_value=5, max_value=60)
         n_break = st.number_input("추세 붕괴 이탈폭 (%)", value=cfg['break_pct'], min_value=0.5, max_value=10.0, step=0.5)
+        n_rank = st.selectbox("신호 동시 발생 시 우선순위", ["6개월 모멘텀", "12-1개월 모멘텀"], index=0 if cfg.get('rank_mode', '6개월 모멘텀') == "6개월 모멘텀" else 1)
     with cfg_col3:
         n_use_a = st.checkbox("신호 A: SMA 지지반등 사용", value=cfg['use_a'])
         n_supp = st.number_input("A 지지 근접 범위 (%)", value=cfg['support_pct'], min_value=1.0, max_value=8.0, step=0.5)
         n_use_b = st.checkbox("신호 B: EMA20 눌림 회복 사용", value=cfg['use_b'])
         n_use_c = st.checkbox("신호 C: MACD 골든크로스 사용", value=cfg['use_c'])
+        n_oos = st.number_input("검증(OOS) 시작 연도 (0=끔)", min_value=0, max_value=2035, value=int(cfg.get('oos_year', 2020)))
+        n_yield = st.number_input("대기 현금 이자 (연 %)", min_value=0.0, max_value=10.0, value=float(cfg.get('cash_yield', 0.0)), step=0.25)
         
     if st.button("🚀 전략 파라미터 적용 & 영구 저장", type="primary", use_container_width=True):
         st.session_state.settings = {
             "max_pos": n_max_pos, "start_year": n_start_year, "cost_pct": n_cost,
+            "acct_usd": n_acct, "rank_mode": n_rank, "oos_year": n_oos, "cash_yield": n_yield,
             "sma_len": n_sma, "slope_len": n_slope, "break_pct": n_break,
             "support_pct": n_supp, "use_a": n_use_a, "use_b": n_use_b, "use_c": n_use_c,
+            "use_deep": True, "deep_pct": 1.0, "use_vol_filt": True
         }
         save_settings_to_disk(st.session_state.settings)
         st.success("✅ 전략 설정이 컴퓨터에 안전하게 영구 저장되었습니다!")
@@ -1784,42 +2124,42 @@ with tab_settings:
 
 # ===== 사이드바: 실전 현황판 매매 나침반 =====
 st.sidebar.title("🏛️ Brothers Capital")
-st.sidebar.caption("브라더스 캐피탈 실전 스윙 나침반 v3.0")
+st.sidebar.caption("브라더스 캐피탈 실전 스윙 나침반 v1.3")
 
 if st.sidebar.button("🔄 데이터 실시간 새로고침", use_container_width=True, help="야후 파이낸스에서 지금 이 순간의 최신 시세를 즉시 다시 긁어옵니다."):
     st.cache_data.clear()
     st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🧭 실전 현황판 1분 매매 루틴")
+st.sidebar.markdown("### 🧭 Dr_Rotation v1.3 실전 루틴")
 
-st.sidebar.markdown("""
+render_html("""
 <div class="guide-box">
 <b>⏰ 확인 시간: 매일 아침 7~9시</b><br>
-미국 장이 최종 마감된 후 커피 한잔하시면서 사이트를 딱 1번 확인합니다.
+미국 장 마감 후 사이트를 딱 1번 확인하고 오늘 밤 주문을 미리 결정합니다.
 </div>
 
-<div class="guide-box" style="border-left: 4px solid #e11d48;">
-<b style="color:#e11d48;">🟢 1. 매수 (신규 진입)</b><br>
-- <b>조건:</b> 국면이 '강세'(200일선 위 & 상승) + 신호(지지/눌림/골든) 감지<br>
-- <b>행동:</b> 빈 슬롯이 있으면 <b>오늘 밤 미국장 시가에 매수 주문</b> 예약!
+<div class="guide-box" style="border-left: 4px solid #16a34a;">
+<b style="color:#15803d;">🟢 1. 매수 (신규 진입)</b><br>
+- <b>조건:</b> 200일선 위 강세 + 신호(지지/눌림/골든) 감지<br>
+- <b>행동:</b> 빈 슬롯이 있으면 <b>모멘텀 상위순 오늘 밤 시가 매수</b> 예약! (계좌 총액 기준 권장 수량 안내)
+</div>
+
+<div class="guide-box" style="border-left: 4px solid #dc2626;">
+<b style="color:#b91c1c;">🔍 2. 논리 점검 (추세 붕괴)</b><br>
+- <b>시스템 종목:</b> 2일 연속 붕괴선(-3%) 하회 시 <b>내일 시가 정리</b> (원칙 방패)<br>
+- <b>신념 종목:</b> 기계적 손절 대신 <b>기업 펀더멘털 & 투자 아이디어 재점검</b>
+</div>
+
+<div class="guide-box" style="border-left: 4px solid #7c3aed;">
+<b style="color:#6d28d9;">📌 3. 신념 보유 분리 관리</b><br>
+- 구글, 버크셔, 노보 등 장기 가치주는 <b>스윙 슬롯(기본 4개)을 소모하지 않음</b><br>
+- 스윙 자금과 장기 신념 자금을 완벽히 분리해 운용
 </div>
 
 <div class="guide-box" style="border-left: 4px solid #2563eb;">
-<b style="color:#2563eb;">🚨 2. 매도 (원칙 손절)</b><br>
-- <b>조건:</b> 2일 연속 종가가 '붕괴선(200일선 -3%)' 아래 마감<br>
-- <b>행동:</b> 미련과 감정을 버리고 <b>오늘 밤 시가 전량 매도</b>! (계좌를 지키는 핵심 방패)
+<b style="color:#1d4ed8;">💼 4. 슬롯 자금 배분 원칙</b><br>
+- 최대 <b>4종목 (슬롯당 1/4 균등)</b> 분산 스윙<br>
+- 신호 동시 발생 시 <b>6개월 모멘텀 상위순</b> 자동 배분
 </div>
-
-<div class="guide-box" style="border-left: 4px solid #64748b;">
-<b>✅ 3. 보유 유지 (수익 극대화)</b><br>
-- <b>조건:</b> 붕괴선을 깨지 않고 추세가 살아있음<br>
-- <b>행동:</b> 흔들리지 말고 계속 홀딩하여 큰 파도를 탑니다.
-</div>
-
-<div class="guide-box">
-<b>💼 4. 슬롯 자금 배분</b><br>
-- 최대 <b>4종목(1/4 균등)</b> 분산 권장<br>
-- 신호가 동시에 몰리면 <b>6M 모멘텀 상위 1위 순</b>으로 채웁니다.
-</div>
-""", unsafe_allow_html=True)
+""")
