@@ -18,13 +18,10 @@ def render_html(html_str):
         st.markdown(textwrap.dedent(html_str).strip(), unsafe_allow_html=True)
 
 def inject_long_press_js():
-    """모바일 꾹 누르기(Long Press 450ms) 및 PC 우클릭 시 수정·삭제 다이얼로그 자동 실행 JS 주입"""
+    """종목 박스 클릭/터치(모바일 스크롤 안전 보호) 및 꾹 누르기/우클릭 시 수정·삭제 다이얼로그 자동 실행 JS 주입"""
     components.html("""
     <script>
     (function() {
-        let pressTimer = null;
-        let isMoved = false;
-
         function attachHandlers() {
             try {
                 const pDoc = window.parent.document;
@@ -32,44 +29,100 @@ def inject_long_press_js():
                 
                 const cards = pDoc.querySelectorAll('[data-stock-sym]');
                 cards.forEach(card => {
-                    if (card._lpSetup) return;
-                    card._lpSetup = true;
+                    if (card._clickSetup) return;
+                    card._clickSetup = true;
 
                     const sym = card.getAttribute('data-stock-sym');
                     if (!sym) return;
 
                     const triggerEdit = () => {
-                        // 콤팩트 뷰 또는 상세 카드 뷰의 편집 버튼 자동 클릭
-                        const btn = pDoc.querySelector(`button[id*="btn_edit_c_${sym}"], button[id*="btn_edit_d_${sym}"]`);
+                        // 1. st-key wrapper 내부의 button 찾기
+                        let btn = pDoc.querySelector(`.st-key-btn_edit_c_${sym} button, .st-key-btn_edit_d_${sym} button, .st-key-btn_edit_${sym} button`);
+                        // 2. id 속성 기준 찾기
+                        if (!btn) {
+                            btn = pDoc.querySelector(`button[id*="btn_edit_c_${sym}"], button[id*="btn_edit_d_${sym}"], button[id*="btn_edit_${sym}"]`);
+                        }
+                        // 3. textContent 기준 찾기
+                        if (!btn) {
+                            const allBtns = pDoc.querySelectorAll('button');
+                            for (let i = 0; i < allBtns.length; i++) {
+                                const t = allBtns[i].textContent || '';
+                                if (t.includes(`_EDIT_${sym}_`)) {
+                                    btn = allBtns[i];
+                                    break;
+                                }
+                            }
+                        }
                         if (btn) {
                             if (navigator.vibrate) {
-                                try { navigator.vibrate(50); } catch(e){}
+                                try { navigator.vibrate(30); } catch(e){}
                             }
                             btn.click();
                         }
                     };
 
-                    const start = (e) => {
-                        isMoved = false;
-                        pressTimer = setTimeout(() => {
-                            if (!isMoved) {
-                                triggerEdit();
-                            }
-                        }, 450);
-                    };
+                    let touchStartX = 0;
+                    let touchStartY = 0;
+                    let isScrolling = false;
+                    let touchStartTime = 0;
+                    let lastTriggerTime = 0;
+                    let pressTimer = null;
 
-                    const cancel = () => {
+                    const cancelPress = () => {
                         if (pressTimer) {
                             clearTimeout(pressTimer);
                             pressTimer = null;
                         }
                     };
 
-                    card.addEventListener('touchstart', start, {passive: true});
-                    card.addEventListener('touchend', cancel);
-                    card.addEventListener('touchcancel', cancel);
-                    card.addEventListener('touchmove', () => { isMoved = true; cancel(); }, {passive: true});
+                    card.addEventListener('touchstart', (e) => {
+                        if (e.touches && e.touches.length > 0) {
+                            touchStartX = e.touches[0].clientX;
+                            touchStartY = e.touches[0].clientY;
+                            touchStartTime = Date.now();
+                            isScrolling = false;
+                            cancelPress();
+                            pressTimer = setTimeout(() => {
+                                if (!isScrolling) {
+                                    lastTriggerTime = Date.now();
+                                    triggerEdit();
+                                }
+                            }, 450);
+                        }
+                    }, {passive: true});
 
+                    card.addEventListener('touchmove', (e) => {
+                        if (e.touches && e.touches.length > 0) {
+                            const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                            const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                            if (dx > 8 || dy > 8) {
+                                isScrolling = true;
+                                cancelPress();
+                            }
+                        }
+                    }, {passive: true});
+
+                    card.addEventListener('touchend', (e) => {
+                        cancelPress();
+                        const elapsed = Date.now() - touchStartTime;
+                        // 스크롤이 아니었고 가벼운 탭인 경우 (< 450ms)
+                        if (!isScrolling && elapsed < 450 && (Date.now() - lastTriggerTime > 600)) {
+                            lastTriggerTime = Date.now();
+                            triggerEdit();
+                        }
+                    });
+
+                    card.addEventListener('touchcancel', cancelPress);
+
+                    // PC 마우스 좌클릭 (모바일 터치 직후 합성 이벤트 중복 방지)
+                    card.addEventListener('click', (e) => {
+                        if (Date.now() - lastTriggerTime > 600) {
+                            lastTriggerTime = Date.now();
+                            triggerEdit();
+                        }
+                    });
+
+                    // PC 우클릭
                     card.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         triggerEdit();
@@ -78,8 +131,8 @@ def inject_long_press_js():
             } catch(e) {}
         }
 
-        setTimeout(attachHandlers, 400);
-        setInterval(attachHandlers, 1200);
+        setTimeout(attachHandlers, 300);
+        setInterval(attachHandlers, 1000);
     })();
     </script>
     """, height=0, width=0)
@@ -161,27 +214,42 @@ st.markdown("""
         gap: 8px;
         margin-bottom: 12px;
     }
+    /* 숨김 처리: 박스 전체 클릭 시 백엔드 다이얼로그 호출용 트리거 버튼 */
+    div[class*="st-key-btn_edit_"] {
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
     .compact-stock-row {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
-        padding: 8px 12px;
-        margin-bottom: 5px;
+        padding: 9px 12px;
+        margin-bottom: 6px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-        transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        transition: all 0.15s ease;
         user-select: none;
         -webkit-user-select: none;
         touch-action: pan-y;
         cursor: pointer;
     }
     .compact-stock-row:hover {
-        border-color: #cbd5e1;
+        border-color: #93c5fd;
         background: #f8fafc;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
     }
     .compact-stock-row:active {
-        transform: scale(0.98);
-        background: #f1f5f9;
-        box-shadow: 0 0 0 2px #7c3aed;
+        transform: scale(0.985);
+        background: #eff6ff;
+        border-color: #3b82f6;
     }
     .mobile-stock-card {
         background: #ffffff;
@@ -190,18 +258,20 @@ st.markdown("""
         padding: 12px 14px;
         margin-bottom: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        transition: all 0.15s ease;
         user-select: none;
         -webkit-user-select: none;
         touch-action: pan-y;
         cursor: pointer;
     }
     .mobile-stock-card:hover {
-        border-color: #cbd5e1;
+        border-color: #93c5fd;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.08);
     }
     .mobile-stock-card:active {
-        transform: scale(0.98);
-        box-shadow: 0 0 0 2px #7c3aed;
+        transform: scale(0.985);
+        background: #eff6ff;
+        border-color: #3b82f6;
     }
     .macro-4card-grid {
         display: grid;
@@ -1181,7 +1251,7 @@ with tab_dashboard:
     h_col1, h_col2, h_col3 = st.columns([3, 1.2, 0.8])
     with h_col1:
         st.subheader("📋 바스켓 실전 현황판")
-        st.caption("💡 종목 카드를 **길게 꾹 누르거나 [✏️] 버튼**을 누르면 수량·평단 수정 및 삭제 창이 열립니다.")
+        st.caption("💡 **종목 박스를 클릭(터치)**하면 수량·평단가 수정 및 삭제 창이 열립니다.")
     with h_col2:
         if st.button("➕ 종목 간편 추가", type="primary", use_container_width=True, help="바스켓에 새 종목을 검색하여 즉시 추가합니다."):
             add_stock_dialog()
@@ -1306,35 +1376,32 @@ with tab_dashboard:
                     hold_info = f"{row['Qty']:.0f}주 @ ${row['Avg']:,.1f}" if row['Qty'] > 0 else "미보유"
                     price_str = f"${row['Close']:,.2f}" if not pd.isna(row['Close']) else "N/A"
                     
-                    row_c1, row_c2 = st.columns([8.4, 1.6])
-                    with row_c1:
-                        render_html(f"""
-                        <div class="compact-stock-row" data-stock-sym="{sym}" title="길게 꾹 누르면 수정/삭제 창이 열립니다.">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                                <div style="display:flex; align-items:center; gap:3px; min-width:0; overflow:hidden;">
-                                    {belief_badge}
-                                    <span style="font-weight:700; font-size:0.90rem; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{kr_name}</span>
-                                    <span style="font-size:0.74rem; color:#64748b;">({sym})</span>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
-                                    <span style="font-weight:800; font-size:0.92rem; color:#0f172a;">{price_str}</span>
-                                    <span style="font-size:0.72rem; font-weight:700; padding:1px 5px; border-radius:4px; background-color:{act_bg}; color:{act_fg}; white-space:nowrap;">
-                                        {act_badge}
-                                    </span>
-                                </div>
+                    render_html(f"""
+                    <div class="compact-stock-row" data-stock-sym="{sym}" title="클릭하여 수량·평단가 수정 및 삭제">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <div style="display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden;">
+                                {belief_badge}
+                                <span style="font-weight:700; font-size:0.92rem; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{kr_name}</span>
+                                <span style="font-size:0.76rem; color:#64748b;">({sym})</span>
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.73rem; color:#64748b;">
-                                <div>{hold_info}</div>
-                                <div style="display:flex; gap:6px;">
-                                    <span style="font-weight:700; color:{pnl_color};">손익 {pnl_str}</span>
-                                    <span>6M <b style="color:{mom_color};">{mom_str} ({mom_rank}위)</b></span>
-                                </div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                <span style="font-weight:800; font-size:0.94rem; color:#0f172a;">{price_str}</span>
+                                <span style="font-size:0.73rem; font-weight:700; padding:2px 6px; border-radius:4px; background-color:{act_bg}; color:{act_fg}; white-space:nowrap;">
+                                    {act_badge}
+                                </span>
                             </div>
                         </div>
-                        """)
-                    with row_c2:
-                        if st.button("✏️", key=f"btn_edit_c_{sym}", help=f"{kr_name} ({sym}) 수정 및 삭제", use_container_width=True):
-                            edit_stock_dialog(sym)
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#64748b;">
+                            <div>{hold_info}</div>
+                            <div style="display:flex; gap:8px;">
+                                <span style="font-weight:700; color:{pnl_color};">손익 {pnl_str}</span>
+                                <span>6M <b style="color:{mom_color};">{mom_str} ({mom_rank}위)</b></span>
+                            </div>
+                        </div>
+                    </div>
+                    """)
+                    if st.button(f"_EDIT_{sym}_", key=f"btn_edit_c_{sym}"):
+                        edit_stock_dialog(sym)
 
         # 2. 🃏 상세 카드 뷰
         elif "상세" in view_mode:
@@ -1417,22 +1484,16 @@ with tab_dashboard:
                     brk_str = f"${row['Brk']:,.1f} ({row['DistBrk']:+.1f}%)" if not pd.isna(row['Brk']) else "N/A"
                     
                     with col_target:
-                        card_top_1, card_top_2 = st.columns([7.6, 2.4])
-                        with card_top_1:
-                            render_html(f"""
-                            <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
-                                <span style="font-weight:700; font-size:0.95rem; color:#0f172a;">{kr_name}</span>
-                                <span style="font-size:0.78rem; color:#64748b;">({sym})</span>
-                                {belief_tag}
-                                <span style="font-size:0.72rem; font-weight:600; padding:1px 4px; border-radius:3px; background:#f8fafc; border:1px solid #e2e8f0; color:{reg_color};">{reg_badge}</span>
-                            </div>
-                            """)
-                        with card_top_2:
-                            if st.button("✏️ 수정", key=f"btn_edit_d_{sym}", help=f"{kr_name} 수정 및 삭제", use_container_width=True):
-                                edit_stock_dialog(sym)
-                                
                         card_html = f"""
-                        <div class="mobile-stock-card" data-stock-sym="{sym}" title="길게 꾹 누르면 수정/삭제 창이 열립니다.">
+                        <div class="mobile-stock-card" data-stock-sym="{sym}" title="클릭하여 수량·평단가 수정 및 삭제">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <div style="display:flex; align-items:center; gap:4px; min-width:0; overflow:hidden;">
+                                    <span style="font-weight:700; font-size:0.95rem; color:#0f172a;">{kr_name}</span>
+                                    <span style="font-size:0.78rem; color:#64748b;">({sym})</span>
+                                    {belief_tag}
+                                </div>
+                                <span style="font-size:0.72rem; font-weight:600; padding:1px 5px; border-radius:3px; background:#f8fafc; border:1px solid #e2e8f0; color:{reg_color}; flex-shrink:0;">{reg_badge}</span>
+                            </div>
                             <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
                                 <div>
                                     <span style="font-size:1.15rem; font-weight:800; color:#0f172a;">{price_str}</span>
@@ -1457,6 +1518,8 @@ with tab_dashboard:
                         </div>
                         """
                         render_html(card_html)
+                        if st.button(f"_EDIT_{sym}_", key=f"btn_edit_d_{sym}"):
+                            edit_stock_dialog(sym)
         # 3. 🖥️ 전체 정밀 표 보기
         else:
             disp_df = filtered_status.copy()
