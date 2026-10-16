@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -15,6 +16,73 @@ def render_html(html_str):
         st.html(html_str)
     else:
         st.markdown(textwrap.dedent(html_str).strip(), unsafe_allow_html=True)
+
+def inject_long_press_js():
+    """모바일 꾹 누르기(Long Press 450ms) 및 PC 우클릭 시 수정·삭제 다이얼로그 자동 실행 JS 주입"""
+    components.html("""
+    <script>
+    (function() {
+        let pressTimer = null;
+        let isMoved = false;
+
+        function attachHandlers() {
+            try {
+                const pDoc = window.parent.document;
+                if (!pDoc) return;
+                
+                const cards = pDoc.querySelectorAll('[data-stock-sym]');
+                cards.forEach(card => {
+                    if (card._lpSetup) return;
+                    card._lpSetup = true;
+
+                    const sym = card.getAttribute('data-stock-sym');
+                    if (!sym) return;
+
+                    const triggerEdit = () => {
+                        // 콤팩트 뷰 또는 상세 카드 뷰의 편집 버튼 자동 클릭
+                        const btn = pDoc.querySelector(`button[id*="btn_edit_c_${sym}"], button[id*="btn_edit_d_${sym}"]`);
+                        if (btn) {
+                            if (navigator.vibrate) {
+                                try { navigator.vibrate(50); } catch(e){}
+                            }
+                            btn.click();
+                        }
+                    };
+
+                    const start = (e) => {
+                        isMoved = false;
+                        pressTimer = setTimeout(() => {
+                            if (!isMoved) {
+                                triggerEdit();
+                            }
+                        }, 450);
+                    };
+
+                    const cancel = () => {
+                        if (pressTimer) {
+                            clearTimeout(pressTimer);
+                            pressTimer = null;
+                        }
+                    };
+
+                    card.addEventListener('touchstart', start, {passive: true});
+                    card.addEventListener('touchend', cancel);
+                    card.addEventListener('touchcancel', cancel);
+                    card.addEventListener('touchmove', () => { isMoved = true; cancel(); }, {passive: true});
+
+                    card.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        triggerEdit();
+                    });
+                });
+            } catch(e) {}
+        }
+
+        setTimeout(attachHandlers, 400);
+        setInterval(attachHandlers, 1200);
+    })();
+    </script>
+    """, height=0, width=0)
 
 # 페이지 기본 설정
 st.set_page_config(
@@ -87,6 +155,34 @@ st.markdown("""
         display: inline-block;
         margin-top: 2px;
     }
+    .summary-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .compact-stock-row {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 5px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: pan-y;
+        cursor: pointer;
+    }
+    .compact-stock-row:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+    .compact-stock-row:active {
+        transform: scale(0.98);
+        background: #f1f5f9;
+        box-shadow: 0 0 0 2px #7c3aed;
+    }
     .mobile-stock-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -94,10 +190,18 @@ st.markdown("""
         padding: 12px 14px;
         margin-bottom: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        transition: transform 0.1s ease;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: pan-y;
+        cursor: pointer;
     }
     .mobile-stock-card:hover {
         border-color: #cbd5e1;
+    }
+    .mobile-stock-card:active {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 2px #7c3aed;
     }
     .macro-4card-grid {
         display: grid;
@@ -108,33 +212,29 @@ st.markdown("""
     .card-buy {
         background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: white;
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-radius: 10px;
-        margin-bottom: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-sell {
         background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
         color: white;
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-radius: 10px;
-        margin-bottom: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-hold {
         background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         color: white;
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-radius: 10px;
-        margin-bottom: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-belief {
         background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
         color: white;
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-radius: 10px;
-        margin-bottom: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-empty {
@@ -142,9 +242,8 @@ st.markdown("""
         color: #64748b;
         padding: 10px 14px;
         border-radius: 8px;
-        margin-bottom: 8px;
         border: 1px dashed #cbd5e1;
-        font-size: 0.88rem;
+        font-size: 0.86rem;
     }
     .theme-header {
         background: #f8fafc;
@@ -166,24 +265,24 @@ st.markdown("""
     /* 📱 모바일 최적화 미디어 쿼리 (화면 너비 768px 이하) */
     @media (max-width: 768px) {
         .block-container {
-            padding-top: 1.0rem !important;
-            padding-bottom: 2.0rem !important;
-            padding-left: 0.7rem !important;
-            padding-right: 0.7rem !important;
+            padding-top: 0.8rem !important;
+            padding-bottom: 1.5rem !important;
+            padding-left: 0.6rem !important;
+            padding-right: 0.6rem !important;
         }
         h1 {
-            font-size: 1.35rem !important;
+            font-size: 1.3rem !important;
             line-height: 1.25 !important;
             margin-bottom: 0.2rem !important;
         }
         h2 {
-            font-size: 1.15rem !important;
+            font-size: 1.1rem !important;
         }
         h3 {
-            font-size: 1.05rem !important;
+            font-size: 1.0rem !important;
         }
         h4 {
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
         }
         .stTabs [data-baseweb="tab-list"] {
             overflow-x: auto !important;
@@ -194,30 +293,65 @@ st.markdown("""
             gap: 2px !important;
         }
         .stTabs [data-baseweb="tab"] {
-            padding: 6px 10px !important;
-            font-size: 0.80rem !important;
+            padding: 5px 8px !important;
+            font-size: 0.78rem !important;
             white-space: nowrap !important;
+        }
+        .summary-cards-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+            margin-bottom: 6px !important;
         }
         .macro-4card-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 6px !important;
         }
         .macro-ticker-item {
-            min-width: 95px !important;
-            padding: 5px 8px !important;
+            min-width: 90px !important;
+            padding: 4px 6px !important;
         }
         .macro-val {
-            font-size: 0.92rem !important;
+            font-size: 0.88rem !important;
         }
-        .card-buy, .card-sell, .card-hold {
-            padding: 10px 12px !important;
+        .card-buy, .card-sell, .card-hold, .card-belief, .card-empty {
+            padding: 6px 8px !important;
+            border-radius: 6px !important;
+            margin-bottom: 0 !important;
         }
-        .card-buy h4, .card-sell h4, .card-hold h4 {
-            font-size: 0.92rem !important;
+        .card-buy h4, .card-sell h4, .card-hold h4, .card-belief h4 {
+            font-size: 0.78rem !important;
+            line-height: 1.15 !important;
+        }
+        .card-buy p, .card-sell p, .card-hold p, .card-belief p {
+            font-size: 0.74rem !important;
+            margin: 2px 0 0 0 !important;
+            line-height: 1.3 !important;
+            word-break: keep-all !important;
+        }
+        .card-buy small, .card-sell small, .card-hold small, .card-belief small, .card-empty small {
+            display: none !important;
         }
         .card-empty {
-            padding: 8px 10px !important;
-            font-size: 0.8rem !important;
+            font-size: 0.74rem !important;
+            padding: 6px 8px !important;
+        }
+        .compact-stock-row {
+            padding: 6px 8px !important;
+            margin-bottom: 5px !important;
+            border-radius: 8px !important;
+        }
+        .mobile-stock-card {
+            padding: 10px 12px !important;
+            margin-bottom: 8px !important;
+            border-radius: 8px !important;
+        }
+        /* 모바일에서 플롯리 차트 위를 가리는 지저분한 모드바(카메라/줌 아이콘) 숨김 */
+        .modebar-container {
+            display: none !important;
+        }
+        /* 모바일 차트 마진 및 폰트 축소 */
+        .js-plotly-plot .plotly .annotation text {
+            font-size: 10px !important;
         }
     }
 </style>
@@ -832,6 +966,135 @@ for item in st.session_state.basket:
 
 status_df = pd.DataFrame(latest_status)
 
+# ===== v1.3 다이얼로그: 종목 간편 수정·삭제 & 신규 추가 =====
+@st.dialog("⚙️ 종목 관리 및 수정")
+def edit_stock_dialog(sym):
+    idx = -1
+    item = None
+    for i, b in enumerate(st.session_state.basket):
+        if b['symbol'] == sym:
+            idx = i
+            item = b
+            break
+            
+    if idx == -1 or item is None:
+        st.error(f"'{sym}' 종목을 바스켓에서 찾을 수 없습니다.")
+        return
+
+    kr_name = STOCK_META.get(sym, {}).get('kr', sym)
+    en_name = STOCK_META.get(sym, {}).get('en', '')
+    
+    st.markdown(f"### {kr_name} <span style='font-size:0.95rem; color:#64748b;'>({sym})</span>", unsafe_allow_html=True)
+    if en_name:
+        st.caption(f"{en_name} · 바스켓 등록 종목")
+        
+    st.markdown("---")
+    
+    cur_qty = float(item.get('qty', 0.0))
+    cur_avg = float(item.get('avg', 0.0))
+    cur_belief = bool(item.get('belief', False))
+    cur_use = bool(item.get('use', True))
+    
+    col_q, col_a = st.columns(2)
+    with col_q:
+        new_qty = st.number_input("내 보유 수량 (주)", min_value=0.0, value=cur_qty, step=1.0, help="0주 입력 시 '미보유/관찰 종목'으로 전환됩니다.")
+    with col_a:
+        new_avg = st.number_input("내 매수 평단가 ($)", min_value=0.0, value=cur_avg, step=0.1, help="보유 중일 때 수익률 계산에 사용됩니다.")
+        
+    new_belief = st.checkbox(
+        "📌 신념 보유 (Conviction Hold · 스윙 4슬롯 미차감)",
+        value=cur_belief,
+        help="체크 시 장기 가치관으로 보유하는 핵심 종목으로 지정되어 시스템 스윙 4개 슬롯을 차지하지 않고 독립 관리됩니다. 추세 붕괴 시에도 기계적 손절 대신 '논리 점검'으로 안내됩니다."
+    )
+    new_use = st.checkbox(
+        "바스켓 활성화 (체크 해제 시 전체 계산에서 임시 제외)",
+        value=cur_use,
+        help="체크를 해제하면 바스켓에 남겨두되 계산과 전광판에서 임시 제외합니다."
+    )
+    
+    st.markdown("---")
+    
+    btn_col1, btn_col2 = st.columns([1.5, 1])
+    with btn_col1:
+        if st.button("💾 변경사항 저장", type="primary", use_container_width=True, key=f"dlg_save_{sym}"):
+            st.session_state.basket[idx]['qty'] = new_qty
+            st.session_state.basket[idx]['avg'] = new_avg
+            st.session_state.basket[idx]['belief'] = new_belief
+            st.session_state.basket[idx]['use'] = new_use
+            save_basket_to_disk(st.session_state.basket)
+            st.success(f"'{kr_name} ({sym})' 정보가 안전하게 영구 저장되었습니다!")
+            st.rerun()
+            
+    with btn_col2:
+        if st.button("🗑️ 바스켓에서 삭제", type="secondary", use_container_width=True, key=f"dlg_del_{sym}"):
+            st.session_state.basket.pop(idx)
+            save_basket_to_disk(st.session_state.basket)
+            st.success(f"'{kr_name} ({sym})' 종목이 바스켓에서 완전히 삭제되었습니다!")
+            st.rerun()
+
+@st.dialog("➕ 바스켓 종목 간편 추가")
+def add_stock_dialog():
+    st.markdown("### ➕ 바스켓에 새 종목 추가")
+    st.caption("한글명, 영문명, 또는 해외 티커 일부만 입력해도 자동완성으로 즉시 찾을 수 있습니다.")
+    
+    search_input = st.text_input(
+        "종목 검색 (예: 엔비, 테슬, 비만, LLY, 애플, AAPL, QQQ...)",
+        value="",
+        placeholder="검색어를 입력하세요...",
+        key="dlg_add_search"
+    ).strip()
+    
+    target_ticker = None
+    if search_input:
+        q_low = search_input.lower()
+        matched = []
+        for s, meta in STOCK_META.items():
+            if q_low in s.lower() or q_low in meta.get('kr', '').lower() or q_low in meta.get('en', '').lower():
+                matched.append(s)
+        if matched:
+            st.caption(f"💡 검색된 추천 종목 ({len(matched)}건) 터치하여 선택:")
+            chosen_pill = st.pills("추천 종목", options=matched[:8], format_func=get_stock_short_label, default=matched[0], key="dlg_add_pills")
+            target_ticker = chosen_pill if chosen_pill else matched[0]
+        else:
+            target_ticker = resolve_ticker_input(search_input)
+            st.info(f"💡 사전에 등록되지 않은 종목입니다. 해외 티커 **'{target_ticker}'**(으)로 직접 등록됩니다.")
+    else:
+        curated_opts = {"(검색어를 입력하거나 아래 대표 우량주에서 선택하세요)": ""}
+        for s in sorted(STOCK_META.keys()):
+            curated_opts[get_stock_label(s)] = s
+        sel_label = st.selectbox("대표 우량주 목록", list(curated_opts.keys()), index=0, key="dlg_add_sel")
+        target_ticker = curated_opts[sel_label]
+        
+    if target_ticker:
+        st.success(f"선택된 대상: **{get_stock_label(target_ticker)}**")
+        
+    col_q, col_a = st.columns(2)
+    with col_q:
+        add_q = st.number_input("보유 수량 (미보유 시 0)", min_value=0.0, value=0.0, step=1.0, key="dlg_add_q")
+    with col_a:
+        add_a = st.number_input("매수 평단가 ($)", min_value=0.0, value=0.0, step=0.1, key="dlg_add_a")
+        
+    add_b = st.checkbox("📌 신념 보유 (Conviction · 스윙 4슬롯 미차감)", value=False, key="dlg_add_b", help="장기 가치관으로 보유하는 종목은 체크하세요. 스윙 알고리즘의 4슬롯을 소모하지 않습니다.")
+    
+    st.markdown("---")
+    
+    can_submit = bool(target_ticker)
+    if st.button("➕ 이 종목 바스켓에 영구 추가하기", type="primary", use_container_width=True, disabled=(not can_submit), key="dlg_add_submit"):
+        existing = [x['symbol'] for x in st.session_state.basket]
+        if target_ticker in existing:
+            st.warning(f"이미 바스켓에 등록된 종목입니다: {get_stock_label(target_ticker)}")
+        else:
+            st.session_state.basket.append({
+                "symbol": target_ticker,
+                "use": True,
+                "qty": add_q,
+                "avg": add_a,
+                "belief": add_b
+            })
+            save_basket_to_disk(st.session_state.basket)
+            st.success(f"'{get_stock_label(target_ticker)}' 종목이 바스켓에 안전하게 추가되었습니다!")
+            st.rerun()
+
 # ===== 상단 2: 오늘의 행동 요약 카드 + ? 마크 도움말 =====
 title_col, help_col = st.columns([5, 1])
 recent_date = status_df['Date'].iloc[0] if not status_df.empty else datetime.today().strftime('%Y-%m-%d')
@@ -856,34 +1119,40 @@ sell_items = status_df[status_df['StatusType'] == "SELL"] if not status_df.empty
 belief_items = status_df[status_df['StatusType'].str.startswith("BELIEF")] if not status_df.empty else pd.DataFrame()
 hold_items = status_df[status_df['StatusType'].isin(["HOLD_GOOD", "HOLD_WARN"])] if not status_df.empty else pd.DataFrame()
 
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    if not buy_items.empty:
-        buy_sorted = buy_items.sort_values(by='Mom', ascending=False)
-        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in buy_sorted.iterrows()])
-        render_html(f"""<div class="card-buy"><h4 style="margin:0; font-size:1.0rem;">🟢 매수 추천 ({len(buy_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">강세 국면 + 눌림/반등 진입</small></div>""")
-    else:
-        render_html("""<div class="card-empty"><b>🟢 매수 추천: 없음</b><br><small>오늘은 진입 신호가 없습니다.</small></div>""")
-with c2:
-    if not sell_items.empty:
-        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in sell_items.iterrows()])
-        render_html(f"""<div class="card-sell"><h4 style="margin:0; font-size:1.0rem;">🔍 논리 점검 ({len(sell_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">추세 붕괴선 이탈 → 정리 검토</small></div>""")
-    else:
-        render_html("""<div class="card-empty"><b>🔍 논리 점검: 없음</b><br><small>붕괴선을 이탈한 종목이 없습니다.</small></div>""")
-with c3:
-    if not belief_items.empty:
-        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in belief_items.iterrows()])
-        render_html(f"""<div class="card-belief"><h4 style="margin:0; font-size:1.0rem;">📌 신념 보유 ({len(belief_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">장기 신념 종목 (슬롯 미차감)</small></div>""")
-    else:
-        render_html("""<div class="card-empty"><b>📌 신념 보유 없음</b><br><small>신념 보유로 지정된 종목이 없습니다.</small></div>""")
-with c4:
-    if not hold_items.empty:
-        symbols_str = ", ".join([f"<b>{get_stock_short_label(row['Symbol'])}</b>" for _, row in hold_items.iterrows()])
-        render_html(f"""<div class="card-hold"><h4 style="margin:0; font-size:1.0rem;">✅ 시스템 보유 ({len(hold_items)}건)</h4><p style="margin:6px 0 0 0; font-size:0.92rem;">{symbols_str}</p><small style="opacity:0.9;">스윙 추세 유지 중. 원칙 홀딩</small></div>""")
-    else:
-        render_html("""<div class="card-empty"><b>✅ 시스템 보유 없음</b><br><small>보유 중인 시스템 종목이 없습니다.</small></div>""")
+# 모바일 2x2, 데스크톱 4열 반응형 요약 카드 그리드 (스크롤 60% 단축!)
+if not buy_items.empty:
+    buy_sorted = buy_items.sort_values(by='Mom', ascending=False)
+    buy_syms_str = ", ".join([f"<b>{get_stock_short_label(r['Symbol'])}</b>" for _, r in buy_sorted.iterrows()])
+    c1_html = f"""<div class="card-buy"><h4 style="margin:0;">🟢 매수 추천 ({len(buy_items)}건)</h4><p>{buy_syms_str}</p><small style="opacity:0.9;">강세 + 눌림/반등</small></div>"""
+else:
+    c1_html = """<div class="card-empty"><b>🟢 매수 추천: 없음</b><br><small>오늘은 진입 신호 없음</small></div>"""
 
-st.markdown("---")
+if not sell_items.empty:
+    sell_syms_str = ", ".join([f"<b>{get_stock_short_label(r['Symbol'])}</b>" for _, r in sell_items.iterrows()])
+    c2_html = f"""<div class="card-sell"><h4 style="margin:0;">🔍 논리 점검 ({len(sell_items)}건)</h4><p>{sell_syms_str}</p><small style="opacity:0.9;">추세 붕괴 → 정리 검토</small></div>"""
+else:
+    c2_html = """<div class="card-empty"><b>🔍 논리 점검: 없음</b><br><small>붕괴선 이탈 종목 없음</small></div>"""
+
+if not belief_items.empty:
+    bel_syms_str = ", ".join([f"<b>{get_stock_short_label(r['Symbol'])}</b>" for _, r in belief_items.iterrows()])
+    c3_html = f"""<div class="card-belief"><h4 style="margin:0;">📌 신념 보유 ({len(belief_items)}건)</h4><p>{bel_syms_str}</p><small style="opacity:0.9;">장기 신념 (슬롯 미차감)</small></div>"""
+else:
+    c3_html = """<div class="card-empty"><b>📌 신념 보유 없음</b><br><small>지정된 신념 종목 없음</small></div>"""
+
+if not hold_items.empty:
+    hold_syms_str = ", ".join([f"<b>{get_stock_short_label(r['Symbol'])}</b>" for _, r in hold_items.iterrows()])
+    c4_html = f"""<div class="card-hold"><h4 style="margin:0;">✅ 시스템 보유 ({len(hold_items)}건)</h4><p>{hold_syms_str}</p><small style="opacity:0.9;">추세 유지 중. 원칙 홀딩</small></div>"""
+else:
+    c4_html = """<div class="card-empty"><b>✅ 시스템 보유 없음</b><br><small>보유 시스템 종목 없음</small></div>"""
+
+render_html(f"""
+<div class="summary-cards-grid">
+    {c1_html}
+    {c2_html}
+    {c3_html}
+    {c4_html}
+</div>
+""")
 
 # ===== 스타일 헬퍼: 세련된 로즈 레드 & 로열 블루 컬러링 =====
 def style_pnl_val(val):
@@ -904,14 +1173,20 @@ tab_dashboard, tab_theme, tab_chart, tab_backtest, tab_macro, tab_settings = st.
     "⚙️ 설정 & 전략 커스텀"
 ])
 
-# --- [탭 1] 실전 현황판 (한글/영문/티커 병기 표기!) ---
+# --- [탭 1] 실전 현황판 (모바일 스크롤 대폭 단축 & 즉시 추가·수정·삭제) ---
 with tab_dashboard:
-    h_col1, h_col2 = st.columns([5, 1])
+    # 롱프레스(꾹 누르기 450ms) & 우클릭 이벤트 리스너 자동 주입
+    inject_long_press_js()
+    
+    h_col1, h_col2, h_col3 = st.columns([3, 1.2, 0.8])
     with h_col1:
         st.subheader("📋 바스켓 실전 현황판")
-        st.caption("종목명에 한글명·영문명·티커가 함께 표기됩니다. 붉은색은 상승/수익, 푸른색은 하락/마이너스를 나타냅니다.")
+        st.caption("💡 종목 카드를 **길게 꾹 누르거나 [✏️] 버튼**을 누르면 수량·평단 수정 및 삭제 창이 열립니다.")
     with h_col2:
-        with st.popover("❓ 현황판 지표 읽는 법"):
+        if st.button("➕ 종목 간편 추가", type="primary", use_container_width=True, help="바스켓에 새 종목을 검색하여 즉시 추가합니다."):
+            add_stock_dialog()
+    with h_col3:
+        with st.popover("❓ 현황판 가이드"):
             st.markdown("""
             **📋 표 항목별 상세 가이드:**
             - **종목명:** 한국 투자자와 동생이 헷갈리지 않도록 **한글명 (영문명 / 티커)**를 함께 표기합니다.
@@ -928,35 +1203,138 @@ with tab_dashboard:
             """)
             
     if not status_df.empty:
-        # 보기 모드 & 필터 선택 (모바일 친화적)
-        v_col1, v_col2 = st.columns([2, 1])
+        # 카테고리별 건수 집계
+        cnt_all = len(status_df)
+        cnt_sys = len(status_df[(status_df['Belief'] == False) & (status_df['Qty'] > 0)])
+        cnt_bel = len(status_df[status_df['Belief'] == True])
+        cnt_sig = len(status_df[status_df['StatusType'].isin(["BUY", "SELL", "BELIEF_WARN"])])
+        cnt_watch = len(status_df[status_df['Qty'] <= 0])
+        
+        filter_pills_map = {
+            f"전체 ({cnt_all})": "ALL",
+            f"💼 시스템 스윙 ({cnt_sys})": "SYS",
+            f"📌 신념 보유 ({cnt_bel})": "BELIEF",
+            f"🔔 오늘 신호 ({cnt_sig})": "SIGNAL",
+            f"👀 관심·미보유 ({cnt_watch})": "WATCH"
+        }
+
+        v_col1, v_col2 = st.columns([1.6, 2.4])
         with v_col1:
             view_mode = st.radio(
-                "보기 형식",
-                ["📱 모바일 간편 카드 뷰", "🖥️ 전체 정밀 표 보기"],
+                "보기 모드",
+                ["⚡ 콤팩트 리스트 (스크롤 최소화)", "🃏 상세 카드 뷰", "🖥️ 전체 정밀 표"],
                 index=0, horizontal=True,
-                help="핸드폰에서는 가로 스크롤 없이 한눈에 들어오는 '모바일 간편 카드 뷰'를 추천합니다."
+                help="핸드폰에서는 한 화면에 모든 종목이 쏙 들어오는 '⚡ 콤팩트 리스트'를 추천합니다."
             )
         with v_col2:
-            filter_mode = st.selectbox(
-                "종목 필터",
-                ["전체 종목", "🔔 신호 발생 (매수/논리점검)", "📌 신념 보유 종목만", "💼 시스템 스윙 종목만", "🟢 강세 국면만"],
-                index=0
+            sel_pill = st.pills(
+                "빠른 필터",
+                list(filter_pills_map.keys()),
+                default=list(filter_pills_map.keys())[0],
+                key="tab1_category_pills"
             )
+            filter_mode_key = filter_pills_map.get(sel_pill, "ALL")
 
         filtered_status = status_df.copy()
-        if filter_mode == "🟢 강세 국면만":
-            filtered_status = filtered_status[filtered_status['RegCode'] == 2]
-        elif filter_mode == "🔔 신호 발생 (매수/논리점검)":
-            filtered_status = filtered_status[filtered_status['StatusType'].isin(["BUY", "SELL", "BELIEF_WARN"])]
-        elif filter_mode == "📌 신념 보유 종목만":
-            filtered_status = filtered_status[filtered_status['Belief'] == True]
-        elif filter_mode == "💼 시스템 스윙 종목만":
+        if filter_mode_key == "SYS":
             filtered_status = filtered_status[(filtered_status['Belief'] == False) & (filtered_status['Qty'] > 0)]
+        elif filter_mode_key == "BELIEF":
+            filtered_status = filtered_status[filtered_status['Belief'] == True]
+        elif filter_mode_key == "SIGNAL":
+            filtered_status = filtered_status[filtered_status['StatusType'].isin(["BUY", "SELL", "BELIEF_WARN"])]
+        elif filter_mode_key == "WATCH":
+            filtered_status = filtered_status[filtered_status['Qty'] <= 0]
 
-        if "모바일" in view_mode:
+        # 1. ⚡ 콤팩트 리스트 모드 (한 화면에 8~10종목 쏙 들어와 스크롤 70% 단축!)
+        if "콤팩트" in view_mode:
             if filtered_status.empty:
-                st.info("선택한 필터에 해당하는 종목이 없습니다.")
+                st.info("선택한 카테고리에 해당하는 종목이 없습니다.")
+            else:
+                for _, row in filtered_status.iterrows():
+                    sym = row['Symbol']
+                    kr_name = STOCK_META.get(sym, {}).get('kr', sym)
+                    st_type = row['StatusType']
+                    
+                    if st_type == "BUY":
+                        act_badge = "🟢 매수 추천"
+                        act_bg = "#dcfce7"; act_fg = "#15803d"
+                    elif st_type == "SELL":
+                        act_badge = "🔍 논리 점검"
+                        act_bg = "#fee2e2"; act_fg = "#b91c1c"
+                    elif st_type == "BELIEF_WARN":
+                        act_badge = "📌 논리 점검"
+                        act_bg = "#fce7f3"; act_fg = "#be185d"
+                    elif st_type == "BELIEF_GOOD":
+                        act_badge = "📌 신념 강세"
+                        act_bg = "#ede9fe"; act_fg = "#6d28d9"
+                    elif st_type == "BELIEF_WEAK":
+                        act_badge = "📌 신념 약세"
+                        act_bg = "#f1f5f9"; act_fg = "#64748b"
+                    elif st_type == "HOLD_GOOD":
+                        act_badge = "✅ 보유 유지"
+                        act_bg = "#eff6ff"; act_fg = "#1d4ed8"
+                    elif st_type == "HOLD_WARN":
+                        act_badge = "⚠️ 보유 약세"
+                        act_bg = "#fef3c7"; act_fg = "#b45309"
+                    elif st_type == "PENDING":
+                        act_badge = "❔ 판정 불가"
+                        act_bg = "#f8fafc"; act_fg = "#64748b"
+                    elif st_type == "PAUSE":
+                        act_badge = "⏸ 슬롯 부족"
+                        act_bg = "#ffedd5"; act_fg = "#c2410c"
+                    elif st_type == "WATCH":
+                        act_badge = "👀 신호 대기"
+                        act_bg = "#fef3c7"; act_fg = "#b45309"
+                    else:
+                        act_badge = "⛔ 매수 금지"
+                        act_bg = "#f1f5f9"; act_fg = "#64748b"
+                        
+                    pnl_val = row['PnL_pct']
+                    if pd.isna(pnl_val):
+                        pnl_str = "-"
+                        pnl_color = "#64748b"
+                    else:
+                        pnl_str = f"{pnl_val:+.1f}%"
+                        pnl_color = "#e11d48" if pnl_val > 0 else "#2563eb"
+                        
+                    belief_badge = '<span style="font-size:0.70rem; background:#ede9fe; color:#6d28d9; padding:1px 4px; border-radius:3px; font-weight:700; border:1px solid #ddd6fe; margin-right:3px;">📌신념</span>' if row['Belief'] else '<span style="font-size:0.70rem; background:#eff6ff; color:#1d4ed8; padding:1px 4px; border-radius:3px; font-weight:700; border:1px solid #dbeafe; margin-right:3px;">💼스윙</span>'
+                    hold_info = f"{row['Qty']:.0f}주 @ ${row['Avg']:,.1f}" if row['Qty'] > 0 else "미보유"
+                    price_str = f"${row['Close']:,.2f}" if not pd.isna(row['Close']) else "N/A"
+                    
+                    row_c1, row_c2 = st.columns([8.4, 1.6])
+                    with row_c1:
+                        render_html(f"""
+                        <div class="compact-stock-row" data-stock-sym="{sym}" title="길게 꾹 누르면 수정/삭제 창이 열립니다.">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                <div style="display:flex; align-items:center; gap:3px; min-width:0; overflow:hidden;">
+                                    {belief_badge}
+                                    <span style="font-weight:700; font-size:0.90rem; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{kr_name}</span>
+                                    <span style="font-size:0.74rem; color:#64748b;">({sym})</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;">
+                                    <span style="font-weight:800; font-size:0.92rem; color:#0f172a;">{price_str}</span>
+                                    <span style="font-size:0.72rem; font-weight:700; padding:1px 5px; border-radius:4px; background-color:{act_bg}; color:{act_fg}; white-space:nowrap;">
+                                        {act_badge}
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.73rem; color:#64748b;">
+                                <div>{hold_info}</div>
+                                <div style="display:flex; gap:6px;">
+                                    <span style="font-weight:700; color:{pnl_color};">손익 {pnl_str}</span>
+                                    <span>6M <b style="color:{mom_color};">{mom_str} ({mom_rank}위)</b></span>
+                                </div>
+                            </div>
+                        </div>
+                        """)
+                    with row_c2:
+                        if st.button("✏️", key=f"btn_edit_c_{sym}", help=f"{kr_name} ({sym}) 수정 및 삭제", use_container_width=True):
+                            edit_stock_dialog(sym)
+
+        # 2. 🃏 상세 카드 뷰
+        elif "상세" in view_mode:
+            if filtered_status.empty:
+                st.info("선택한 카테고리에 해당하는 종목이 없습니다.")
             else:
                 m_cols = st.columns(2)
                 for idx, (_, row) in enumerate(filtered_status.iterrows()):
@@ -1028,33 +1406,53 @@ with tab_dashboard:
                         pnl_str = f"{pnl_val:+.1f}%"
                         pnl_color = "#e11d48" if pnl_val > 0 else "#2563eb"
                         
-                    belief_tag = '<span style="font-size:0.74rem; background:#ede9fe; color:#6d28d9; padding:1px 5px; border-radius:4px; font-weight:700; margin-left:4px; border:1px solid #ddd6fe;">📌 신념</span>' if row['Belief'] else ""
+                    belief_tag = '<span style="font-size:0.70rem; background:#ede9fe; color:#6d28d9; padding:1px 4px; border-radius:3px; font-weight:700; margin-left:3px; border:1px solid #ddd6fe;">📌신념</span>' if row['Belief'] else '<span style="font-size:0.70rem; background:#eff6ff; color:#1d4ed8; padding:1px 4px; border-radius:3px; font-weight:700; margin-left:3px; border:1px solid #dbeafe;">💼스윙</span>'
                     hold_info = f"{row['Qty']:.0f}주 보유" if row['Qty'] > 0 else "미보유"
                     price_str = f"${row['Close']:,.2f}" if not pd.isna(row['Close']) else "N/A"
                     brk_str = f"${row['Brk']:,.1f} ({row['DistBrk']:+.1f}%)" if not pd.isna(row['Brk']) else "N/A"
                     
                     with col_target:
+                        card_top_1, card_top_2 = st.columns([7.6, 2.4])
+                        with card_top_1:
+                            render_html(f"""
+                            <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+                                <span style="font-weight:700; font-size:0.95rem; color:#0f172a;">{kr_name}</span>
+                                <span style="font-size:0.78rem; color:#64748b;">({sym})</span>
+                                {belief_tag}
+                                <span style="font-size:0.72rem; font-weight:600; padding:1px 4px; border-radius:3px; background:#f8fafc; border:1px solid #e2e8f0; color:{reg_color};">{reg_badge}</span>
+                            </div>
+                            """)
+                        with card_top_2:
+                            if st.button("✏️ 수정", key=f"btn_edit_d_{sym}", help=f"{kr_name} 수정 및 삭제", use_container_width=True):
+                                edit_stock_dialog(sym)
+                                
                         card_html = f"""
-                        <div class="mobile-stock-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <span style="font-weight: 700; font-size: 0.98rem; color: #0f172a;">{kr_name} <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">({sym})</span>{belief_tag}</span>
-                                <span style="font-size: 0.78rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #f8fafc; border: 1px solid #e2e8f0; color: {reg_color};">{reg_badge}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                        <div class="mobile-stock-card" data-stock-sym="{sym}" title="길게 꾹 누르면 수정/삭제 창이 열립니다.">
+                            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
                                 <div>
-                                    <span style="font-size: 1.22rem; font-weight: 800; color: #0f172a;">{price_str}</span>
-                                    <span style="font-size: 0.78rem; color: #64748b; margin-left: 6px;">({hold_info})</span>
+                                    <span style="font-size:1.15rem; font-weight:800; color:#0f172a;">{price_str}</span>
+                                    <span style="font-size:0.75rem; color:#64748b; margin-left:6px;">({hold_info})</span>
                                 </div>
-                                <span style="font-size: 0.8rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background-color: {act_bg}; color: {act_fg};">{act_badge}</span>
+                                <span style="font-size:0.76rem; font-weight:700; padding:2px 7px; border-radius:5px; background-color:{act_bg}; color:{act_fg};">{act_badge}</span>
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: #f8fafc; padding: 8px 10px; border-radius: 6px; font-size: 0.78rem; border: 1px solid #f1f5f9;">
-                                <div><span style="color: #64748b;">모멘텀</span><br/><b style="color: {mom_color};">{mom_str} ({mom_rank}위)</b></div>
-                                <div><span style="color: #64748b;">붕괴선</span><br/><b>{brk_str}</b></div>
-                                <div><span style="color: #64748b;">내 손익률</span><br/><b style="color: {pnl_color};">{pnl_str}</b></div>
+                            <div style="background:#f8fafc; padding:6px 10px; border-radius:6px; font-size:0.76rem; border:1px solid #f1f5f9;">
+                                <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed #e2e8f0;">
+                                    <span style="color:#64748b;">6M 모멘텀</span>
+                                    <b style="color:{mom_color};">{mom_str} ({mom_rank}위)</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed #e2e8f0;">
+                                    <span style="color:#64748b;">200일 붕괴선</span>
+                                    <b>{brk_str}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; padding:3px 0;">
+                                    <span style="color:#64748b;">내 손익률</span>
+                                    <b style="color:{pnl_color};">{pnl_str}</b>
+                                </div>
                             </div>
                         </div>
                         """
                         render_html(card_html)
+        # 3. 🖥️ 전체 정밀 표 보기
         else:
             disp_df = filtered_status.copy()
             disp_df['구분'] = disp_df['Belief'].apply(lambda b: "📌 신념" if b else "💼 시스템")
@@ -1070,7 +1468,7 @@ with tab_dashboard:
             cols_show = ['구분', '종목 (한글 / 영문 / 티커)', '현재가', '국면', '오늘 신호', '붕괴선 (거리)', '모멘텀 (순위)', '내 보유 (손익)', '행동 가이드']
             st.dataframe(disp_df[cols_show], use_container_width=True, hide_index=True)
     else:
-        st.warning("등록된 종목이 없습니다. [⚙️ 설정] 탭에서 종목을 추가하세요.")
+        st.warning("등록된 종목이 없습니다. 상단의 [➕ 종목 간편 추가] 버튼으로 종목을 등록하세요.")
 
 # --- [탭 2] 20대 테마 수급 & 순환매 ---
 with tab_theme:
@@ -1191,11 +1589,13 @@ with tab_theme:
             marker_color='#e11d48', text=[f"{x:+.2f}%" for x in inflow_df[sort_col]], textposition='outside'
         ))
         fig_in.update_layout(
-            title=f"<b>🔥 자금 유입 상위 테마 ({time_sort})</b>",
-            xaxis_title="평균 상승률 (%)", template="plotly_white", height=270,
-            margin=dict(l=10, r=40, t=35, b=15)
+            title=dict(text=f"<b>🔥 자금 유입 상위 테마 ({time_sort})</b>", font=dict(size=12, color="#0f172a")),
+            xaxis_title="평균 상승률 (%)", template="plotly_white", height=280,
+            yaxis=dict(tickfont=dict(size=10)),
+            xaxis=dict(tickfont=dict(size=9)),
+            margin=dict(l=110, r=50, t=35, b=20)
         )
-        st.plotly_chart(fig_in, use_container_width=True)
+        st.plotly_chart(fig_in, use_container_width=True, config={'displayModeBar': False})
         
     with c_chart_out:
         outflow_df = sorted_all_df.tail(7).sort_values(by=sort_col, ascending=False)
@@ -1204,11 +1604,13 @@ with tab_theme:
             marker_color='#2563eb', text=[f"{x:+.2f}%" for x in outflow_df[sort_col]], textposition='outside'
         ))
         fig_out.update_layout(
-            title=f"<b>🧊 자금 유출 (소외/하락) 테마 ({time_sort})</b>",
-            xaxis_title="평균 하락률 (%)", template="plotly_white", height=270,
-            margin=dict(l=10, r=40, t=35, b=15)
+            title=dict(text=f"<b>🧊 자금 유출 테마 ({time_sort})</b>", font=dict(size=12, color="#0f172a")),
+            xaxis_title="평균 하락률 (%)", template="plotly_white", height=280,
+            yaxis=dict(tickfont=dict(size=10)),
+            xaxis=dict(tickfont=dict(size=9)),
+            margin=dict(l=110, r=50, t=35, b=20)
         )
-        st.plotly_chart(fig_out, use_container_width=True)
+        st.plotly_chart(fig_out, use_container_width=True, config={'displayModeBar': False})
         
     st.markdown("---")
     
@@ -1285,10 +1687,17 @@ with tab_theme:
                 v_col = ['#e11d48' if c >= o else '#2563eb' for c, o in zip(df_sub['Close'], df_sub['Open'])]
                 fig_sub.add_trace(go.Bar(x=df_sub.index, y=df_sub['Volume'], name='거래량', marker_color=v_col), row=2, col=1)
                 fig_sub.update_layout(
-                    title=f"<b>{get_stock_label(target_stock)}</b> 최근 일봉 캔들 & 거래량",
-                    xaxis_rangeslider_visible=False, template="plotly_white", height=380, hovermode="x unified"
+                    title=dict(text=f"<b>{get_stock_short_label(target_stock)}</b> 최근 일봉 & 거래량", font=dict(size=12, color="#0f172a")),
+                    xaxis_rangeslider_visible=False,
+                    template="plotly_white",
+                    height=360,
+                    hovermode="x",
+                    showlegend=False,
+                    yaxis=dict(side="right", tickfont=dict(size=10)),
+                    xaxis=dict(tickfont=dict(size=9)),
+                    margin=dict(l=10, r=45, t=30, b=20)
                 )
-                st.plotly_chart(fig_sub, use_container_width=True)
+                st.plotly_chart(fig_sub, use_container_width=True, config={'displayModeBar': False})
 
     st.markdown("---")
     with st.expander("➕ 나만의 커스텀 테마 새로 만들기 (원하는 종목 묶음 등록)"):
@@ -1430,7 +1839,7 @@ with tab_chart:
             
         fig_c = make_subplots(
             rows=n_rows, cols=1, shared_xaxes=True,
-            vertical_spacing=0.04, row_heights=row_heights,
+            vertical_spacing=0.06 if n_rows > 1 else 0.04, row_heights=row_heights,
             subplot_titles=subplot_titles
         )
         
@@ -1439,39 +1848,40 @@ with tab_chart:
             x=df_target.index, open=df_target['Open'], high=df_target['High'],
             low=df_target['Low'], close=df_target['Close'], name='주가 (일봉)',
             increasing=dict(line=dict(color='#e11d48'), fillcolor='#e11d48'),
-            decreasing=dict(line=dict(color='#2563eb'), fillcolor='#2563eb')
+            decreasing=dict(line=dict(color='#2563eb'), fillcolor='#2563eb'),
+            showlegend=False
         ), row=1, col=1)
         
         # 전략선 (SMA200, 붕괴선, EMA20)
         if t_strat:
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['SMA200'], mode='lines', name=f'SMA {cfg["sma_len"]}', line=dict(color='#eab308', width=2)), row=1, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['E20'], mode='lines', name='EMA 20', line=dict(color='#64748b', width=1.5)), row=1, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['Brk'], mode='lines', name='붕괴선', line=dict(color='#dc2626', width=1.2, dash='dot')), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['SMA200'], mode='lines', name=f'SMA {cfg["sma_len"]}', line=dict(color='#eab308', width=2), showlegend=False), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['E20'], mode='lines', name='EMA 20', line=dict(color='#64748b', width=1.5), showlegend=False), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['Brk'], mode='lines', name='붕괴선', line=dict(color='#dc2626', width=1.2, dash='dot'), showlegend=False), row=1, col=1)
             
         # 볼린저 밴드
         if t_bb:
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_upper, mode='lines', name='BB 상단', line=dict(color='#a855f7', width=1, dash='dot')), row=1, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_lower, mode='lines', name='BB 하단', line=dict(color='#a855f7', width=1, dash='dot'), fill='tonexty', fillcolor='rgba(168, 85, 247, 0.05)'), row=1, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_mid, mode='lines', name='BB 중심(20)', line=dict(color='#c084fc', width=1)), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_upper, mode='lines', name='BB 상단', line=dict(color='#a855f7', width=1, dash='dot'), showlegend=False), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_lower, mode='lines', name='BB 하단', line=dict(color='#a855f7', width=1, dash='dot'), fill='tonexty', fillcolor='rgba(168, 85, 247, 0.05)', showlegend=False), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_mid, mode='lines', name='BB 중심(20)', line=dict(color='#c084fc', width=1), showlegend=False), row=1, col=1)
 
         # 다중 이평선
         if t_emas:
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma5, mode='lines', name='SMA 5 (초단기)', line=dict(color='#06b6d4', width=1.2)), row=1, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma60, mode='lines', name='SMA 60 (중기)', line=dict(color='#10b981', width=1.5)), row=1, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma120, mode='lines', name='SMA 120 (경기)', line=dict(color='#f97316', width=1.5)), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma5, mode='lines', name='SMA 5 (초단기)', line=dict(color='#06b6d4', width=1.2), showlegend=False), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma60, mode='lines', name='SMA 60 (중기)', line=dict(color='#10b981', width=1.5), showlegend=False), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma120, mode='lines', name='SMA 120 (경기)', line=dict(color='#f97316', width=1.5), showlegend=False), row=1, col=1)
 
         # 2. 거래량 서브플롯
         if t_vol and 'vol' in row_map:
             v_row = row_map['vol']
             colors_vol = ['#e11d48' if c >= o else '#2563eb' for c, o in zip(df_target['Close'], df_target['Open'])]
-            fig_c.add_trace(go.Bar(x=df_target.index, y=vol_s, name='거래량', marker_color=colors_vol), row=v_row, col=1)
+            fig_c.add_trace(go.Bar(x=df_target.index, y=vol_s, name='거래량', marker_color=colors_vol, showlegend=False), row=v_row, col=1)
             vol_ma20 = vol_s.rolling(20).mean()
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=vol_ma20, mode='lines', name='거래량 20MA', line=dict(color='#f59e0b', width=1)), row=v_row, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=vol_ma20, mode='lines', name='거래량 20MA', line=dict(color='#f59e0b', width=1), showlegend=False), row=v_row, col=1)
 
         # 3. RSI 서브플롯
         if t_rsi and 'rsi' in row_map:
             r_row = row_map['rsi']
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=rsi, mode='lines', name='RSI', line=dict(color='#8b5cf6', width=1.8)), row=r_row, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=rsi, mode='lines', name='RSI', line=dict(color='#8b5cf6', width=1.8), showlegend=False), row=r_row, col=1)
             fig_c.add_hline(y=70, line_dash="dash", line_color="#e11d48", line_width=1, row=r_row, col=1)
             fig_c.add_hline(y=30, line_dash="dash", line_color="#2563eb", line_width=1, row=r_row, col=1)
             fig_c.update_yaxes(range=[10, 90], row=r_row, col=1)
@@ -1479,19 +1889,30 @@ with tab_chart:
         # 4. MACD 서브플롯
         if t_macd and 'macd' in row_map:
             m_row = row_map['macd']
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=macd_line, mode='lines', name='MACD', line=dict(color='#3b82f6', width=1.5)), row=m_row, col=1)
-            fig_c.add_trace(go.Scatter(x=df_target.index, y=macd_sig, mode='lines', name='Signal', line=dict(color='#f97316', width=1.2)), row=m_row, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=macd_line, mode='lines', name='MACD', line=dict(color='#3b82f6', width=1.5), showlegend=False), row=m_row, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=macd_sig, mode='lines', name='Signal', line=dict(color='#f97316', width=1.2), showlegend=False), row=m_row, col=1)
             hist_colors = ['#e11d48' if val >= 0 else '#2563eb' for val in macd_hist]
-            fig_c.add_trace(go.Bar(x=df_target.index, y=macd_hist, name='오실레이터', marker_color=hist_colors), row=m_row, col=1)
+            fig_c.add_trace(go.Bar(x=df_target.index, y=macd_hist, name='오실레이터', marker_color=hist_colors, showlegend=False), row=m_row, col=1)
+
+        # 서브플롯 타이틀 폰트 최적화 (모바일 겹침 방지)
+        for a in fig_c['layout']['annotations']:
+            a['font'] = dict(size=10, color='#64748b')
+            a['x'] = 0.0
+            a['xanchor'] = 'left'
 
         fig_c.update_layout(
             xaxis_rangeslider_visible=False,
             template="plotly_white",
             height=total_height,
-            hovermode="x unified",
-            margin=dict(l=10, r=20, t=30, b=20)
+            hovermode="x",
+            showlegend=False,
+            margin=dict(l=10, r=48, t=25, b=25)
         )
-        st.plotly_chart(fig_c, use_container_width=True)
+        for r_idx in range(1, n_rows + 1):
+            fig_c.update_yaxes(side="right", tickfont=dict(size=9), row=r_idx, col=1)
+            fig_c.update_xaxes(tickfont=dict(size=9), row=r_idx, col=1)
+
+        st.plotly_chart(fig_c, use_container_width=True, config={'displayModeBar': False})
         
         # 하단 AI 종합 기술적 진단 요약 박스
         last_item = df_target.iloc[-1]
@@ -1677,8 +2098,24 @@ with tab_backtest:
         fig_s.add_trace(go.Scatter(x=sim_res.index, y=sim_res['Strategy'], name='순환 스윙 전략', line=dict(color='#e11d48', width=2.5)))
         fig_s.add_trace(go.Scatter(x=sim_res.index, y=sim_res['EqualWeight'], name='바스켓 단순보유 (EW)', line=dict(color='#2563eb', width=1.5)))
         fig_s.add_trace(go.Scatter(x=sim_res.index, y=sim_res['SPY'], name='S&P 500 (SPY)', line=dict(color='#94a3b8', width=1.2, dash='dot')))
-        fig_s.update_layout(title="자산 성장 곡선 (시작=100)", template="plotly_white", hovermode="x unified", height=450)
-        st.plotly_chart(fig_s, use_container_width=True)
+        fig_s.update_layout(
+            title=dict(text="<b>자산 성장 곡선 (시작=100)</b>", font=dict(size=13, color="#0f172a")),
+            template="plotly_white",
+            hovermode="x",
+            height=400,
+            yaxis=dict(side="right", tickfont=dict(size=10)),
+            xaxis=dict(tickfont=dict(size=9)),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.18,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=10)
+            ),
+            margin=dict(l=15, r=45, t=35, b=45)
+        )
+        st.plotly_chart(fig_s, use_container_width=True, config={'displayModeBar': False})
     else:
         st.info("백테스트 데이터가 부족합니다.")
 
@@ -1841,14 +2278,23 @@ with tab_macro:
             ))
             
         fig_m.update_layout(
-            title=f"<b>글로벌 주요 자산 vs 현금/은행예금 성장 곡선 ({sel_period_label}, 시작=100)</b>",
+            title=dict(text=f"<b>글로벌 자산 vs 예금 성장률 ({sel_period_label})</b>", font=dict(size=13, color="#0f172a")),
             template="plotly_white",
-            hovermode="x unified",
+            hovermode="x",
             height=420,
-            yaxis_title="자산 가치 (기준점 = 100)",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            yaxis=dict(side="right", tickfont=dict(size=10)),
+            xaxis=dict(tickfont=dict(size=9)),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=-0.20,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=10)
+            ),
+            margin=dict(l=15, r=45, t=35, b=55)
         )
-        st.plotly_chart(fig_m, use_container_width=True)
+        st.plotly_chart(fig_m, use_container_width=True, config={'displayModeBar': False})
         
         # 3. 자산별 수익률 성적표 & 현금/예금 대비 성과 테이블
         st.markdown("#### 📋 자산별 수익률 성적표 & 현금/예금 대비 성과 비교")
