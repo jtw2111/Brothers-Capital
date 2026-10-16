@@ -11,106 +11,199 @@ from pathlib import Path
 
 # 페이지 기본 설정
 st.set_page_config(
-    page_title="Dr. Rotation — 올인원 자산 대시보드",
-    page_icon="🧺",
+    page_title="Brothers Capital (브라더스 캐피탈) — 올인원 자산 대시보드",
+    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# 커스텀 CSS (세련된 뮤트 톤 로즈 레드 / 로열 블루 팔레트)
+# 커스텀 CSS (세련된 뮤트 톤 로즈 레드 / 로열 블루 팔레트 & 모바일 최적화)
 st.markdown("""
 <style>
-    .macro-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 14px;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        transition: transform 0.15s ease-in-out;
+    /* 데스크톱 & 공통 스타일 */
+    .macro-ticker-scroll {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px;
+        padding: 4px 2px 8px 2px;
+        margin-bottom: 6px;
+        scrollbar-width: thin;
     }
-    .macro-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+    .macro-ticker-scroll::-webkit-scrollbar {
+        height: 4px;
+    }
+    .macro-ticker-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .macro-ticker-item {
+        flex: 0 0 auto;
+        min-width: 110px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 10px;
+        text-align: center;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     .macro-title {
-        font-size: 0.82rem;
+        font-size: 0.76rem;
         color: #64748b;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
         font-weight: 500;
+        white-space: nowrap;
     }
     .macro-val {
-        font-size: 1.15rem;
+        font-size: 1.0rem;
         font-weight: 700;
         color: #0f172a;
     }
     .macro-chg-up {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         color: #e11d48;
         font-weight: 700;
         background: #ffe4e6;
-        padding: 2px 6px;
+        padding: 1px 6px;
         border-radius: 4px;
         display: inline-block;
         margin-top: 2px;
     }
     .macro-chg-down {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         color: #2563eb;
         font-weight: 700;
         background: #dbeafe;
-        padding: 2px 6px;
+        padding: 1px 6px;
         border-radius: 4px;
         display: inline-block;
         margin-top: 2px;
     }
+    .mobile-stock-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        transition: transform 0.1s ease;
+    }
+    .mobile-stock-card:hover {
+        border-color: #cbd5e1;
+    }
+    .macro-4card-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
     .card-buy {
         background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-sell {
         background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
         color: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-hold {
         background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         color: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
     }
     .card-empty {
         background: #f8fafc;
         color: #64748b;
-        padding: 14px 18px;
-        border-radius: 10px;
-        margin-bottom: 10px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 8px;
         border: 1px dashed #cbd5e1;
+        font-size: 0.88rem;
     }
     .theme-header {
         background: #f8fafc;
-        padding: 14px 18px;
-        border-radius: 10px;
-        border-left: 5px solid #2563eb;
-        margin-bottom: 15px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border-left: 4px solid #2563eb;
+        margin-bottom: 10px;
     }
     .guide-box {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
-        padding: 12px 14px;
-        font-size: 0.88rem;
-        line-height: 1.5;
-        margin-bottom: 10px;
+        padding: 10px 12px;
+        font-size: 0.84rem;
+        line-height: 1.45;
+        margin-bottom: 8px;
+    }
+
+    /* 📱 모바일 최적화 미디어 쿼리 (화면 너비 768px 이하) */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1.0rem !important;
+            padding-bottom: 2.0rem !important;
+            padding-left: 0.7rem !important;
+            padding-right: 0.7rem !important;
+        }
+        h1 {
+            font-size: 1.35rem !important;
+            line-height: 1.25 !important;
+            margin-bottom: 0.2rem !important;
+        }
+        h2 {
+            font-size: 1.15rem !important;
+        }
+        h3 {
+            font-size: 1.05rem !important;
+        }
+        h4 {
+            font-size: 0.95rem !important;
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 4px !important;
+            gap: 2px !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            padding: 6px 10px !important;
+            font-size: 0.80rem !important;
+            white-space: nowrap !important;
+        }
+        .macro-4card-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+        }
+        .macro-ticker-item {
+            min-width: 95px !important;
+            padding: 5px 8px !important;
+        }
+        .macro-val {
+            font-size: 0.92rem !important;
+        }
+        .card-buy, .card-sell, .card-hold {
+            padding: 10px 12px !important;
+        }
+        .card-buy h4, .card-sell h4, .card-hold h4 {
+            font-size: 0.92rem !important;
+        }
+        .card-empty {
+            padding: 8px 10px !important;
+            font-size: 0.8rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -336,7 +429,7 @@ DEFAULT_THEMES = {
 }
 
 PRESETS = {
-    "Dr. Rotation 기본 11종목": [
+    "Brothers Capital 기본 우량주": [
         {"symbol": "GOOGL", "use": True, "qty": 30.0, "avg": 349.77},
         {"symbol": "AMZN",  "use": True, "qty": 30.0, "avg": 254.99},
         {"symbol": "DE",    "use": True, "qty": 25.0, "avg": 628.75},
@@ -382,7 +475,7 @@ def load_saved_basket():
                 return json.load(f)
         except Exception:
             pass
-    return PRESETS["Dr. Rotation 기본 11종목"]
+    return PRESETS["Brothers Capital 기본 우량주"]
 
 def save_basket_to_disk(basket):
     with open(PORTFOLIO_FILE, "w", encoding="utf-8") as f:
@@ -519,33 +612,45 @@ def calc_indicators(df, cfg):
         'Regime': regime, 'RegCode': reg_code, 'Sig': sig, 'Mom': mom, 'ATR': atr
     }, index=df.index)
 
-# ===== 상단 1: 매크로 전광판 =====
+# ===== 상단 1: 매크로 전광판 (모바일 가로 스와이프 지원!) =====
 macro_data = fetch_macro_data()
 if macro_data:
-    st.markdown("##### 🌐 글로벌 주요 자산 실시간 전광판")
-    m_cols = st.columns(len(macro_data))
-    for idx, (label, item) in enumerate(macro_data.items()):
+    chips_html = []
+    for label, item in macro_data.items():
         val = item['val']; chg = item['chg']
         chg_cls = "macro-chg-up" if chg >= 0 else "macro-chg-down"
         chg_sign = "+" if chg >= 0 else ""
         if "원/달러" in label:
             fmt_val = f"₩{val:,.1f}"
         elif "코스피" in label:
-            fmt_val = f"{val:,.2f}p"
+            fmt_val = f"{val:,.1f}p"
         elif "국채" in label:
             fmt_val = f"{val:.2f}%"
         elif "비트코인" in label:
             fmt_val = f"${val:,.0f}"
         else:
             fmt_val = f"${val:,.2f}"
-        with m_cols[idx]:
-            st.markdown(f"""
-            <div class="macro-card">
-                <div class="macro-title">{label}</div>
-                <div class="macro-val">{fmt_val}</div>
-                <div class="{chg_cls}">{chg_sign}{chg:.2f}%</div>
-            </div>""", unsafe_allow_html=True)
-    st.markdown("<div style='margin-bottom: 12px;'></div>", unsafe_allow_html=True)
+            
+        short_lbl = label.replace(" (KOSPI)", "").replace(" (Gold)", "")
+        chips_html.append(f"""
+        <div class="macro-ticker-item">
+            <div class="macro-title">{short_lbl}</div>
+            <div class="macro-val">{fmt_val}</div>
+            <div class="{chg_cls}">{chg_sign}{chg:.2f}%</div>
+        </div>
+        """)
+    
+    st.markdown(f"""
+    <div style="margin-bottom: 2px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: #64748b;">🌐 글로벌 매크로 전광판</span>
+            <span style="font-size: 0.72rem; color: #94a3b8;">👉 좌우로 스와이프</span>
+        </div>
+        <div class="macro-ticker-scroll">
+            {''.join(chips_html)}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ===== 데이터 로드 및 최신 상태 도출 =====
 cfg = st.session_state.settings
@@ -600,8 +705,8 @@ if not status_df.empty:
 # ===== 상단 2: 오늘의 행동 요약 카드 + ? 마크 도움말 =====
 title_col, help_col = st.columns([5, 1])
 with title_col:
-    st.title("🧺 Dr. Rotation — 대형주 순환 스윙")
-    st.caption(f"최근 데이터 기준일: {status_df['Date'].iloc[0] if not status_df.empty else '로딩중'} | 매일 장마감 후 익일 시가 실행 가이드")
+    st.title("🏛️ Brothers Capital (브라더스 캐피탈)")
+    st.caption(f"대형주 순환 스윙 & 글로벌 거시자산 올인원 나침반 | 최근 데이터 기준일: {status_df['Date'].iloc[0] if not status_df.empty else '로딩중'} | 매일 장마감 후 익일 시가 실행")
 with help_col:
     st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
     with st.popover("❓ 오늘의 행동 카드란?"):
@@ -683,28 +788,116 @@ with tab_dashboard:
             """)
             
     if not status_df.empty:
-        disp_df = status_df.copy()
-        
-        # 한글 + 영문 + 티커 병기 표기 생성!
-        disp_df['종목 (한글 / 영문 / 티커)'] = disp_df['Symbol'].apply(get_stock_label)
-        disp_df['현재가'] = disp_df['Close'].apply(lambda x: f"${x:,.2f}")
-        disp_df['국면'] = disp_df['RegCode'].apply(lambda x: "🟢 강세" if x==2 else ("🟡 중립" if x==1 else ("🟠 조정" if x==0 else "🔴 약세")))
-        disp_df['오늘 신호'] = disp_df['Sig'].apply(lambda x: "A 지지반등" if x==1 else ("B 눌림회복" if x==2 else ("C 골든크로스" if x==3 else "-")))
-        disp_df['붕괴선'] = disp_df.apply(lambda r: f"${r['Brk']:,.2f} ({r['DistBrk']:+.1f}%)", axis=1)
-        disp_df['6M 모멘텀'] = disp_df['Mom'] * 100.0
-        disp_df['내 보유 손익률'] = disp_df['PnL_pct']
-        disp_df['보유현황'] = disp_df.apply(lambda r: f"{r['Qty']:.0f}주 @ ${r['Avg']:,.2f}" if r['Qty']>0 else "-", axis=1)
-        disp_df['행동 가이드'] = disp_df['Action']
-        
-        show_cols = ['종목 (한글 / 영문 / 티커)', '현재가', '국면', '오늘 신호', '붕괴선', '6M 모멘텀', '보유현황', '내 보유 손익률', '행동 가이드']
-        view_table = disp_df[show_cols]
-        
-        styled_view = view_table.style.format({
-            '6M 모멘텀': lambda x: f"{x:+.1f}%" if not pd.isna(x) else "-",
-            '내 보유 손익률': lambda x: f"{x:+.1f}%" if not pd.isna(x) else "-"
-        }).map(style_pnl_val, subset=['6M 모멘텀', '내 보유 손익률'])
-        
-        st.dataframe(styled_view, use_container_width=True, hide_index=True)
+        # 보기 모드 & 필터 선택 (모바일 친화적)
+        v_col1, v_col2 = st.columns([2, 1])
+        with v_col1:
+            view_mode = st.radio(
+                "보기 형식",
+                ["📱 모바일 간편 카드 뷰", "🖥️ 전체 정밀 표 보기"],
+                index=0, horizontal=True,
+                help="핸드폰에서는 가로 스크롤 없이 한눈에 들어오는 '모바일 간편 카드 뷰'를 추천합니다."
+            )
+        with v_col2:
+            filter_mode = st.selectbox(
+                "종목 필터",
+                ["전체 종목", "🟢 강세 국면만", "🔔 신호 발생 종목", "💼 내 보유 종목만"],
+                index=0
+            )
+
+        filtered_status = status_df.copy()
+        if filter_mode == "🟢 강세 국면만":
+            filtered_status = filtered_status[filtered_status['RegCode'] == 2]
+        elif filter_mode == "🔔 신호 발생 종목":
+            filtered_status = filtered_status[filtered_status['StatusType'].isin(["BUY", "SELL"])]
+        elif filter_mode == "💼 내 보유 종목만":
+            filtered_status = filtered_status[filtered_status['Qty'] > 0]
+
+        if "모바일" in view_mode:
+            if filtered_status.empty:
+                st.info("선택한 필터에 해당하는 종목이 없습니다.")
+            else:
+                m_cols = st.columns(2)
+                for idx, (_, row) in enumerate(filtered_status.iterrows()):
+                    col_target = m_cols[idx % 2]
+                    sym = row['Symbol']
+                    kr_name = STOCK_META.get(sym, {}).get('kr', sym)
+                    rc = row['RegCode']
+                    reg_badge = "🟢 강세" if rc==2 else ("🟡 중립" if rc==1 else ("🟠 조정" if rc==0 else "🔴 약세"))
+                    reg_color = "#15803d" if rc==2 else ("#b45309" if rc==1 else "#b91c1c")
+                    
+                    st_type = row['StatusType']
+                    if st_type == "BUY":
+                        act_badge = "🟢 내일 시가 매수"
+                        act_bg = "#dcfce7"; act_fg = "#15803d"
+                    elif st_type == "SELL":
+                        act_badge = "🚨 내일 시가 매도"
+                        act_bg = "#fee2e2"; act_fg = "#b91c1c"
+                    elif "HOLD" in st_type:
+                        act_badge = "✅ 보유 유지"
+                        act_bg = "#eff6ff"; act_fg = "#1d4ed8"
+                    elif st_type == "WATCH":
+                        act_badge = "👀 신호 대기"
+                        act_bg = "#fef3c7"; act_fg = "#b45309"
+                    else:
+                        act_badge = "⛔ 매수 금지"
+                        act_bg = "#f1f5f9"; act_fg = "#64748b"
+                        
+                    mom_val = row['Mom'] * 100.0
+                    mom_color = "#e11d48" if mom_val > 0 else "#2563eb"
+                    mom_rank = int(row['MomRank']) if not pd.isna(row['MomRank']) else "-"
+                    
+                    pnl_val = row['PnL_pct']
+                    if pd.isna(pnl_val):
+                        pnl_str = "-"
+                        pnl_color = "#64748b"
+                    else:
+                        pnl_str = f"{pnl_val:+.1f}%"
+                        pnl_color = "#e11d48" if pnl_val > 0 else "#2563eb"
+                        
+                    hold_info = f"{row['Qty']:.0f}주 보유" if row['Qty'] > 0 else "미보유"
+                    
+                    with col_target:
+                        st.markdown(f"""
+                        <div class="mobile-stock-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-weight: 700; font-size: 0.98rem; color: #0f172a;">{kr_name} <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">({sym})</span></span>
+                                <span style="font-size: 0.78rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #f8fafc; border: 1px solid #e2e8f0; color: {reg_color};">{reg_badge}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                                <div>
+                                    <span style="font-size: 1.22rem; font-weight: 800; color: #0f172a;">${row['Close']:,.2f}</span>
+                                    <span style="font-size: 0.78rem; color: #64748b; margin-left: 6px;">({hold_info})</span>
+                                </div>
+                                <span style="font-size: 0.8rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background-color: {act_bg}; color: {act_fg};">{act_badge}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: #f8fafc; padding: 8px 10px; border-radius: 6px; font-size: 0.78rem; border: 1px solid #f1f5f9;">
+                                <div><span style="color: #64748b;">6M 모멘텀</span><br/><b style="color: {mom_color};">{mom_val:+.1f}% ({mom_rank}위)</b></div>
+                                <div><span style="color: #64748b;">붕괴선 거리</span><br/><b>${row['Brk']:,.1f} ({row['DistBrk']:+.1f}%)</b></div>
+                                <div><span style="color: #64748b;">내 손익률</span><br/><b style="color: {pnl_color};">{pnl_str}</b></div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+        else:
+            disp_df = filtered_status.copy()
+            disp_df['종목 (한글 / 영문 / 티커)'] = disp_df['Symbol'].apply(get_stock_label)
+            disp_df['현재가'] = disp_df['Close'].apply(lambda x: f"${x:,.2f}")
+            disp_df['국면'] = disp_df['RegCode'].apply(lambda x: "🟢 강세" if x==2 else ("🟡 중립" if x==1 else ("🟠 조정" if x==0 else "🔴 약세")))
+            disp_df['오늘 신호'] = disp_df['Sig'].apply(lambda x: "A 지지반등" if x==1 else ("B 눌림회복" if x==2 else ("C 골든크로스" if x==3 else "-")))
+            disp_df['붕괴선'] = disp_df.apply(lambda r: f"${r['Brk']:,.2f} ({r['DistBrk']:+.1f}%)", axis=1)
+            disp_df['6M 모멘텀'] = disp_df['Mom'] * 100.0
+            disp_df['내 보유 손익률'] = disp_df['PnL_pct']
+            disp_df['보유현황'] = disp_df.apply(lambda r: f"{r['Qty']:.0f}주 @ ${r['Avg']:,.2f}" if r['Qty']>0 else "-", axis=1)
+            disp_df['행동 가이드'] = disp_df['Action']
+            
+            show_cols = ['종목 (한글 / 영문 / 티커)', '현재가', '국면', '오늘 신호', '붕괴선', '6M 모멘텀', '보유현황', '내 보유 손익률', '행동 가이드']
+            view_table = disp_df[show_cols]
+            
+            styled_view = view_table.style.format({
+                '6M 모멘텀': lambda x: f"{x:+.1f}%" if not pd.isna(x) else "-",
+                '내 보유 손익률': lambda x: f"{x:+.1f}%" if not pd.isna(x) else "-"
+            }).map(style_pnl_val, subset=['6M 모멘텀', '내 보유 손익률'])
+            
+            st.dataframe(styled_view, use_container_width=True, hide_index=True)
     else:
         st.warning("등록된 종목이 없습니다. [⚙️ 설정] 탭에서 종목을 추가하세요.")
 
@@ -820,8 +1013,8 @@ with tab_theme:
         ))
         fig_in.update_layout(
             title=f"<b>🔥 자금 유입 상위 테마 ({time_sort})</b>",
-            xaxis_title="평균 상승률 (%)", template="plotly_white", height=320,
-            margin=dict(l=10, r=40, t=40, b=20)
+            xaxis_title="평균 상승률 (%)", template="plotly_white", height=270,
+            margin=dict(l=10, r=40, t=35, b=15)
         )
         st.plotly_chart(fig_in, use_container_width=True)
         
@@ -833,8 +1026,8 @@ with tab_theme:
         ))
         fig_out.update_layout(
             title=f"<b>🧊 자금 유출 (소외/하락) 테마 ({time_sort})</b>",
-            xaxis_title="평균 하락률 (%)", template="plotly_white", height=320,
-            margin=dict(l=10, r=40, t=40, b=20)
+            xaxis_title="평균 하락률 (%)", template="plotly_white", height=270,
+            margin=dict(l=10, r=40, t=35, b=15)
         )
         st.plotly_chart(fig_out, use_container_width=True)
         
@@ -962,35 +1155,158 @@ with tab_chart:
         chart_options = {get_stock_label(s): s for s in available_symbols}
         selected_chart_label = st.selectbox("분석할 종목을 선택하세요 (한글/영문/티커)", list(chart_options.keys()), index=0)
         selected_sym = chart_options[selected_chart_label]
-        df_target = ind_dict[selected_sym].tail(250)
+        df_target = ind_dict[selected_sym].tail(250).copy()
         
-        fig_c = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.04, row_heights=[0.75, 0.25])
+        # 보조지표 계산
+        close_s = df_target['Close']
+        high_s = df_target['High']
+        low_s = df_target['Low']
+        vol_s = df_target['Volume']
+        
+        # 1) 볼린저 밴드 (20, 2)
+        bb_mid = close_s.rolling(20).mean()
+        bb_std = close_s.rolling(20).std()
+        bb_upper = bb_mid + (2 * bb_std)
+        bb_lower = bb_mid - (2 * bb_std)
+        
+        # 2) 다중 이동평균선 (5, 60, 120일)
+        sma5 = close_s.rolling(5).mean()
+        sma60 = close_s.rolling(60).mean()
+        sma120 = close_s.rolling(120).mean()
+        
+        # 3) RSI (14)
+        delta = close_s.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+        rs = gain / (loss.replace(0, np.nan))
+        rsi = 100 - (100 / (1 + rs))
+        
+        # 4) MACD (12, 26, 9)
+        e12 = close_s.ewm(span=12, adjust=False).mean()
+        e26 = close_s.ewm(span=26, adjust=False).mean()
+        macd_line = e12 - e26
+        macd_sig = macd_line.ewm(span=9, adjust=False).mean()
+        macd_hist = macd_line - macd_sig
+        
+        # ===== 보조지표 On/Off 설정 (접이식으로 모바일 화면 대폭 절약) =====
+        with st.expander("🛠️ 보조지표 On / Off 설정 (클릭하여 열기)", expanded=False):
+            tog_c1, tog_c2, tog_c3 = st.columns(3)
+            with tog_c1:
+                t_strat = st.checkbox("전략선 (200선/붕괴선)", value=True, help="200일선과 -3% 붕괴 손절선을 표시합니다.")
+                t_vol = st.checkbox("거래량 (Volume)", value=True, help="일별 거래량 바 차트를 표시합니다.")
+            with tog_c2:
+                t_bb = st.checkbox("볼린저 밴드 (20, 2)", value=False, help="20일 기준 표준편차 ±2 밴드를 표시합니다.")
+                t_rsi = st.checkbox("RSI (14)", value=True, help="과열(70)과 과매도(30)를 감지하는 RSI 보조지표를 표시합니다.")
+            with tog_c3:
+                t_emas = st.checkbox("이평선 (5/60/120선)", value=False, help="5일(초단기), 60일(중기), 120일(경기선)을 표시합니다.")
+                t_macd = st.checkbox("MACD (12,26,9)", value=False, help="추세 전환과 골든크로스를 감지하는 MACD를 표시합니다.")
+
+        # 서브플롯 동적 행 구성
+        subplot_titles = ["<b>주가 (일봉 캔들)</b>"]
+        row_heights = [0.60]
+        n_rows = 1
+        
+        row_map = {}
+        if t_vol:
+            n_rows += 1
+            row_map['vol'] = n_rows
+            subplot_titles.append("<b>거래량</b>")
+            row_heights.append(0.14)
+        if t_rsi:
+            n_rows += 1
+            row_map['rsi'] = n_rows
+            subplot_titles.append("<b>RSI (14)</b>")
+            row_heights.append(0.14)
+        if t_macd:
+            n_rows += 1
+            row_map['macd'] = n_rows
+            subplot_titles.append("<b>MACD (12, 26, 9)</b>")
+            row_heights.append(0.14)
+            
+        # 모바일 친화적 차트 높이 동적 조절 (과도한 스크롤 방지)
+        total_height = 410 + (n_rows - 1) * 95
+        
+        fig_c = make_subplots(
+            rows=n_rows, cols=1, shared_xaxes=True,
+            vertical_spacing=0.035, row_heights=row_heights,
+            subplot_titles=subplot_titles
+        )
+        
+        # 1. 메인 캔들스틱 (Row 1)
         fig_c.add_trace(go.Candlestick(
             x=df_target.index, open=df_target['Open'], high=df_target['High'],
             low=df_target['Low'], close=df_target['Close'], name='주가 (일봉)',
             increasing=dict(line=dict(color='#e11d48'), fillcolor='#e11d48'),
             decreasing=dict(line=dict(color='#2563eb'), fillcolor='#2563eb')
         ), row=1, col=1)
-        fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['SMA200'], mode='lines', name=f'SMA {cfg["sma_len"]}', line=dict(color='#eab308', width=2)), row=1, col=1)
-        fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['E20'], mode='lines', name='EMA 20', line=dict(color='#64748b', width=1.5)), row=1, col=1)
-        fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['Brk'], mode='lines', name='붕괴선', line=dict(color='#dc2626', width=1.2, dash='dot')), row=1, col=1)
-        colors_vol = ['#e11d48' if c >= o else '#2563eb' for c, o in zip(df_target['Close'], df_target['Open'])]
-        fig_c.add_trace(go.Bar(x=df_target.index, y=df_target['Volume'], name='거래량', marker_color=colors_vol), row=2, col=1)
         
+        # 전략선 (SMA200, 붕괴선, EMA20)
+        if t_strat:
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['SMA200'], mode='lines', name=f'SMA {cfg["sma_len"]}', line=dict(color='#eab308', width=2)), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['E20'], mode='lines', name='EMA 20', line=dict(color='#64748b', width=1.5)), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=df_target['Brk'], mode='lines', name='붕괴선', line=dict(color='#dc2626', width=1.2, dash='dot')), row=1, col=1)
+            
+        # 볼린저 밴드
+        if t_bb:
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_upper, mode='lines', name='BB 상단', line=dict(color='#a855f7', width=1, dash='dot')), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_lower, mode='lines', name='BB 하단', line=dict(color='#a855f7', width=1, dash='dot'), fill='tonexty', fillcolor='rgba(168, 85, 247, 0.05)'), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=bb_mid, mode='lines', name='BB 중심(20)', line=dict(color='#c084fc', width=1)), row=1, col=1)
+
+        # 다중 이평선
+        if t_emas:
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma5, mode='lines', name='SMA 5 (초단기)', line=dict(color='#06b6d4', width=1.2)), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma60, mode='lines', name='SMA 60 (중기)', line=dict(color='#10b981', width=1.5)), row=1, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=sma120, mode='lines', name='SMA 120 (경기)', line=dict(color='#f97316', width=1.5)), row=1, col=1)
+
+        # 2. 거래량 서브플롯
+        if t_vol and 'vol' in row_map:
+            v_row = row_map['vol']
+            colors_vol = ['#e11d48' if c >= o else '#2563eb' for c, o in zip(df_target['Close'], df_target['Open'])]
+            fig_c.add_trace(go.Bar(x=df_target.index, y=vol_s, name='거래량', marker_color=colors_vol), row=v_row, col=1)
+            vol_ma20 = vol_s.rolling(20).mean()
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=vol_ma20, mode='lines', name='거래량 20MA', line=dict(color='#f59e0b', width=1)), row=v_row, col=1)
+
+        # 3. RSI 서브플롯
+        if t_rsi and 'rsi' in row_map:
+            r_row = row_map['rsi']
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=rsi, mode='lines', name='RSI', line=dict(color='#8b5cf6', width=1.8)), row=r_row, col=1)
+            fig_c.add_hline(y=70, line_dash="dash", line_color="#e11d48", line_width=1, row=r_row, col=1)
+            fig_c.add_hline(y=30, line_dash="dash", line_color="#2563eb", line_width=1, row=r_row, col=1)
+            fig_c.update_yaxes(range=[10, 90], row=r_row, col=1)
+
+        # 4. MACD 서브플롯
+        if t_macd and 'macd' in row_map:
+            m_row = row_map['macd']
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=macd_line, mode='lines', name='MACD', line=dict(color='#3b82f6', width=1.5)), row=m_row, col=1)
+            fig_c.add_trace(go.Scatter(x=df_target.index, y=macd_sig, mode='lines', name='Signal', line=dict(color='#f97316', width=1.2)), row=m_row, col=1)
+            hist_colors = ['#e11d48' if val >= 0 else '#2563eb' for val in macd_hist]
+            fig_c.add_trace(go.Bar(x=df_target.index, y=macd_hist, name='오실레이터', marker_color=hist_colors), row=m_row, col=1)
+
         fig_c.update_layout(
-            title=f"<b>{get_stock_label(selected_sym)}</b> 일봉 차트 (SMA200, EMA20, 붕괴선)",
-            xaxis_rangeslider_visible=False, template="plotly_white", height=550, hovermode="x unified"
+            xaxis_rangeslider_visible=False,
+            template="plotly_white",
+            height=total_height,
+            hovermode="x unified",
+            margin=dict(l=10, r=20, t=30, b=20)
         )
         st.plotly_chart(fig_c, use_container_width=True)
         
+        # 하단 AI 종합 기술적 진단 요약 박스
         last_item = df_target.iloc[-1]
         c_val = last_item['Close']; s200_val = last_item['SMA200']
         dist_sma = (c_val / s200_val - 1.0) * 100.0
+        last_rsi = rsi.iloc[-1] if not rsi.empty else np.nan
+        last_macd_h = macd_hist.iloc[-1] if not macd_hist.empty else np.nan
+        
+        rsi_comment = "과열권 (차익실현 주의)" if last_rsi >= 70 else ("과매도권 (기술적 반등 기대)" if last_rsi <= 30 else "안정적 중립 구간")
+        macd_comment = "매수 우위 (양의 모멘텀)" if last_macd_h > 0 else "조정/매도 우위 (음의 모멘텀)"
+        
         st.markdown(f"""
-        > 💡 **{get_stock_short_label(selected_sym)} 기술적 진단:**
-        > - 현재가 **${c_val:,.2f}**는 200일선(${s200_val:,.2f}) 대비 **{dist_sma:+.1f}%** 이격되어 있습니다.
-        > - 붕괴 방어선: **${last_item['Brk']:,.2f}** (이 가격 아래로 2일 연속 마감 시 손절/전량 매도 룰 적용)
-        > - 6개월 누적 모멘텀: **{last_item['Mom']*100:+.1f}%**
+        > 💡 **{get_stock_short_label(selected_sym)} 실시간 기술적 진단 리포트:**
+        > - **200일선 이격도:** 현재가 **${c_val:,.2f}**는 200일선(${s200_val:,.2f}) 대비 **{dist_sma:+.1f}%** 위치에 있습니다.
+        > - **붕괴 방어선:** **${last_item['Brk']:,.2f}** (2일 연속 이탈 시 원칙 손절)
+        > - **RSI(14):** **{last_rsi:.1f}** 👉 **{rsi_comment}**
+        > - **MACD 모멘텀:** **{macd_comment}** (오실레이터: {last_macd_h:+.2f})
         """)
     else:
         st.info("차트를 표시할 종목 데이터가 없습니다.")
@@ -1099,37 +1415,251 @@ with tab_backtest:
         st.info("백테스트 데이터가 부족합니다.")
 
 # --- [탭 5] 매크로 자산 비교 ---
+@st.cache_data(ttl=1800)
+def fetch_macro_comparison_data(period_str):
+    tickers = ["^KS11", "SPY", "QQQ", "GLD", "BTC-USD", "KRW=X"]
+    return yf.download(tickers, period=period_str, progress=False, group_by='ticker', auto_adjust=True)
+
 with tab_macro:
     m_head1, m_head2 = st.columns([5, 1])
     with m_head1:
-        st.subheader("🌍 주요 글로벌 자산 추세 비교")
+        st.subheader("🌍 주요 글로벌 자산 vs 현금/예금 종합 비교")
+        st.caption("주식·비트코인·금 등 위험 자산의 성과를 '순수 현금 보유(0%)' 및 '은행 정기예금 복리 이자'와 객관적으로 비교 검증합니다.")
     with m_head2:
-        with st.popover("❓ 매크로 지표 보는 법"):
+        with st.popover("❓ 매크로 & 현금/예금 비교 가이드"):
             st.markdown("""
-            **🌍 글로벌 거시경제 지표 가이드:**
-            - **원/달러 환율:** 환율이 급등하면 외국인 자금이 빠져나가며 시장 변동성이 커집니다.
-            - **미국 10년물 국채금리:** 글로벌 금리의 벤치마크. 금리가 급등하면 고밸류 성장주(빅테크)에 부담이 됩니다.
-            - **금 (Gold) & 비트코인:** 화폐 가치 하락 및 인플레이션 헷지 자산으로, 주식 시장이 불안할 때 자금이 이동하는지 체크하세요.
+            **🌍 왜 현금 보유 및 은행 예금과 비교해야 할까요?**
+            - **1) 무위험 수익률(은행 예금) 초과 여부:**  
+              투자에서 가장 중요한 원칙은 *"내가 감수한 위험에 걸맞은 초과 수익(Risk Premium)을 얻었는가?"* 입니다. 1년 동안 마음 졸이며 투자한 결과가 안전한 은행 정기예금(연 3.5%)보다 낮다면, 차라리 은행에 넣어두는 것이 더 유리했던 셈입니다.
+            - **2) 순수 현금 보유 (0% 수익률)의 함정:**  
+              "주식을 안 사고 가만히 있으면 본전"이라고 생각하기 쉽지만, 연 2~3%대의 인플레이션(물가상승)으로 인해 현금의 실질 구매력은 매년 조용히 깎여나가는 **'조용한 실질 손실'**을 입게 됩니다.
+            - **3) 하락장에서의 현금의 위력:**  
+              하지만 시장이 폭락할 때는 현금(0%)이 최고의 자산이 됩니다. 주식이 -30% 깨질 때 현금을 쥐고 있으면 엄청난 초과 성과를 내며 바닥에서 헐값에 주식을 담을 수 있습니다.
             """)
             
-    macro_tickers = {
-        "코스피 (KOSPI)": "^KS11",
-        "S&P 500": "SPY",
-        "나스닥 100": "QQQ",
-        "금 (Gold)": "GLD",
-        "비트코인": "BTC-USD",
-        "원/달러 환율": "KRW=X"
+    # 상단 컨트롤 바 (기간 선택 & 은행 예금 금리 설정)
+    col_m_per, col_m_rate = st.columns([1, 1])
+    with col_m_per:
+        period_map = {
+            "최근 1년 (권장)": "1y",
+            "최근 6개월": "6mo",
+            "최근 3년": "3y",
+            "최근 5년": "5y"
+        }
+        sel_period_label = st.selectbox("📅 비교 분석 기간", list(period_map.keys()), index=0, help="분석할 기간을 선택하세요.")
+        period_val = period_map[sel_period_label]
+        
+    with col_m_rate:
+        deposit_rate = st.number_input(
+            "🏦 비교할 은행 예금 금리 (연 %)",
+            min_value=0.5, max_value=15.0, value=3.5, step=0.1,
+            help="현재 시중 정기예금 또는 파킹통장의 연이율을 입력하세요 (기본값: 연 3.5%)."
+        )
+
+    macro_meta = {
+        "코스피 (KOSPI)": {"ticker": "^KS11", "color": "#e11d48"},
+        "S&P 500": {"ticker": "SPY", "color": "#3b82f6"},
+        "나스닥 100": {"ticker": "QQQ", "color": "#8b5cf6"},
+        "금 (Gold)": {"ticker": "GLD", "color": "#eab308"},
+        "비트코인": {"ticker": "BTC-USD", "color": "#f97316"},
+        "원/달러 환율": {"ticker": "KRW=X", "color": "#06b6d4"}
     }
-    m_raw = yf.download(list(macro_tickers.values()), period="1y", progress=False, group_by='ticker', auto_adjust=True)
-    fig_m = go.Figure()
-    for lbl, t in macro_tickers.items():
-        if t in m_raw.columns.levels[0]:
-            sub_c = m_raw[t]['Close'].dropna()
-            if len(sub_c) > 0:
-                norm = sub_c / sub_c.iloc[0] * 100.0
-                fig_m.add_trace(go.Scatter(x=norm.index, y=norm, name=lbl))
-    fig_m.update_layout(title="최근 1년 주요 자산 수익률 비교 (시작=100)", template="plotly_white", hovermode="x unified", height=480)
-    st.plotly_chart(fig_m, use_container_width=True)
+    
+    with st.spinner("글로벌 거시경제 및 예금/현금 데이터 동기화 중..."):
+        m_raw = fetch_macro_comparison_data(period_val)
+        
+    # 날짜 기준점 잡기 (SPY 또는 가용 자산 기준)
+    ref_t = "SPY" if "SPY" in m_raw.columns.levels[0] else list(m_raw.columns.levels[0])[0]
+    ref_s = m_raw[ref_t]['Close'].dropna()
+    dates = ref_s.index
+    
+    if len(dates) >= 2:
+        d_start, d_end = dates[0], dates[-1]
+        total_days = max(1, (d_end - d_start).days)
+        
+        # 은행 예금 누적 수익률 계산 (일 복리 연환산)
+        dep_cum_ret = ((1.0 + deposit_rate / 100.0) ** (total_days / 365.25) - 1.0) * 100.0
+        
+        # 자산별 수익률 데이터 수집
+        score_list = []
+        for lbl, meta in macro_meta.items():
+            t = meta["ticker"]
+            if t in m_raw.columns.levels[0]:
+                sub_c = m_raw[t]['Close'].dropna()
+                if len(sub_c) >= 2:
+                    ret = (sub_c.iloc[-1] / sub_c.iloc[0] - 1.0) * 100.0
+                    score_list.append({
+                        "name": lbl, "ret": ret, "sub_c": sub_c,
+                        "color": meta["color"], "type": "asset"
+                    })
+        
+        score_list_sorted = sorted(score_list, key=lambda x: x['ret'], reverse=True)
+        best_asset = score_list_sorted[0] if score_list_sorted else None
+        worst_asset = score_list_sorted[-1] if score_list_sorted else None
+        
+        # 1. 상단 4단 요약 메트릭 카드 (모바일 2x2 반응형 그리드)
+        c3_html = ""
+        if best_asset:
+            diff_dep = best_asset['ret'] - dep_cum_ret
+            diff_color = "#e11d48" if diff_dep >= 0 else "#2563eb"
+            c3_html = f"""
+            <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 10px; text-align: center;">
+                <span style="font-size: 0.78rem; color: #9f1239; font-weight: 600;">🏆 최고 수익 자산</span><br/>
+                <span style="font-size: 1.2rem; color: #e11d48; font-weight: 700;">{best_asset['name'].split()[0]} {best_asset['ret']:+.1f}%</span><br/>
+                <span style="font-size: 0.72rem; color: {diff_color};">예금 대비 {diff_dep:+.1f}%p</span>
+            </div>
+            """
+        c4_html = ""
+        if worst_asset:
+            diff_dep_w = worst_asset['ret'] - dep_cum_ret
+            diff_color_w = "#e11d48" if diff_dep_w >= 0 else "#2563eb"
+            c4_html = f"""
+            <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px; text-align: center;">
+                <span style="font-size: 0.78rem; color: #1e40af; font-weight: 600;">🧊 최저 성과 자산</span><br/>
+                <span style="font-size: 1.2rem; color: #2563eb; font-weight: 700;">{worst_asset['name'].split()[0]} {worst_asset['ret']:+.1f}%</span><br/>
+                <span style="font-size: 0.72rem; color: {diff_color_w};">예금 대비 {diff_dep_w:+.1f}%p</span>
+            </div>
+            """
+            
+        st.markdown(f"""
+        <div class="macro-4card-grid">
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; text-align: center;">
+                <span style="font-size: 0.78rem; color: #166534; font-weight: 600;">🏦 은행 정기예금 (기준)</span><br/>
+                <span style="font-size: 1.2rem; color: #15803d; font-weight: 700;">+{dep_cum_ret:.2f}%</span><br/>
+                <span style="font-size: 0.72rem; color: #166534;">연 {deposit_rate}% 복리</span>
+            </div>
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center;">
+                <span style="font-size: 0.78rem; color: #475569; font-weight: 600;">💵 순수 현금 보유</span><br/>
+                <span style="font-size: 1.2rem; color: #64748b; font-weight: 700;">0.00%</span><br/>
+                <span style="font-size: 0.72rem; color: #94a3b8;">물가 감안 실질 손실</span>
+            </div>
+            {c3_html}
+            {c4_html}
+        </div>
+        """, unsafe_allow_html=True)
+                
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        
+        # 2. 메인 비교 차트 (시작=100)
+        fig_m = go.Figure()
+        
+        # 현금 보유 (0%) - 차분한 회색 점선
+        fig_m.add_trace(go.Scatter(
+            x=dates, y=[100.0] * len(dates),
+            name="💵 순수 현금 보유 (0.0%)",
+            line=dict(color="#64748b", width=2.0, dash="dash"),
+            hovertemplate="💵 순수 현금: 100.0 (수익률 0.0%)<extra></extra>"
+        ))
+        
+        # 은행 정기예금 - 든든한 녹색 실선
+        dep_curve = [100.0 * ((1.0 + deposit_rate / 100.0) ** ((d - d_start).days / 365.25)) for d in dates]
+        fig_m.add_trace(go.Scatter(
+            x=dates, y=dep_curve,
+            name=f"🏦 은행 정기예금 (연 {deposit_rate}%)",
+            line=dict(color="#10b981", width=2.6),
+            hovertemplate=f"🏦 은행 예금: %{{y:.2f}} (누적 +{dep_cum_ret:.1f}%)<extra></extra>"
+        ))
+        
+        # 글로벌 자산들
+        for item in score_list:
+            sub_c = item['sub_c']
+            norm = sub_c / sub_c.iloc[0] * 100.0
+            fig_m.add_trace(go.Scatter(
+                x=norm.index, y=norm,
+                name=item['name'],
+                line=dict(color=item['color'], width=1.8),
+                hovertemplate=f"<b>{item['name']}</b>: %{{y:.2f}} ({item['ret']:+.1f}%)<extra></extra>"
+            ))
+            
+        fig_m.update_layout(
+            title=f"<b>글로벌 주요 자산 vs 현금/은행예금 성장 곡선 ({sel_period_label}, 시작=100)</b>",
+            template="plotly_white",
+            hovermode="x unified",
+            height=420,
+            yaxis_title="자산 가치 (기준점 = 100)",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        st.plotly_chart(fig_m, use_container_width=True)
+        
+        # 3. 자산별 수익률 성적표 & 현금/예금 대비 성과 테이블
+        st.markdown("#### 📋 자산별 수익률 성적표 & 현금/예금 대비 성과 비교")
+        
+        all_items = []
+        for item in score_list:
+            all_items.append({"name": item['name'], "ret": item['ret'], "type": "asset"})
+        all_items.append({"name": f"🏦 은행 정기예금 (연 {deposit_rate}%)", "ret": dep_cum_ret, "type": "deposit"})
+        all_items.append({"name": "💵 순수 현금 보유", "ret": 0.0, "type": "cash"})
+        
+        all_items_sorted = sorted(all_items, key=lambda x: x['ret'], reverse=True)
+        
+        tbl_rows = []
+        for rank, it in enumerate(all_items_sorted, 1):
+            r_val = it['ret']
+            vs_dep = r_val - dep_cum_ret
+            vs_cash = r_val
+            
+            if it['type'] == 'deposit':
+                status = "🛡️ 무위험 원금 보장 (투자 기준점)"
+                bg_style = "background-color: #f0fdf4;"
+            elif it['type'] == 'cash':
+                status = "⏳ 물가상승 실질 손실 (구매력 하락)"
+                bg_style = "background-color: #f8fafc;"
+            elif r_val >= dep_cum_ret + 10.0:
+                status = "🔥 초과 달성 (위험 프리미엄 극대화)"
+                bg_style = "background-color: #fff1f2;"
+            elif r_val >= dep_cum_ret:
+                status = "✨ 예금 초과 달성 (투자 성공)"
+                bg_style = "background-color: #fff1f2;"
+            elif r_val >= 0.0:
+                status = "⚠️ 예금 미달 (예금 넣는 게 더 이득)"
+                bg_style = "background-color: #fffbeb;"
+            else:
+                status = "🧊 원금 손실 (투자 실패 구간)"
+                bg_style = "background-color: #eff6ff;"
+                
+            ret_color = "#e11d48" if r_val > 0 else ("#2563eb" if r_val < 0 else "#64748b")
+            dep_color = "#e11d48" if vs_dep > 0 else ("#2563eb" if vs_dep < 0 else "#64748b")
+            cash_color = "#e11d48" if vs_cash > 0 else ("#2563eb" if vs_cash < 0 else "#64748b")
+            
+            tbl_rows.append(f"""
+            <tr style="{bg_style} border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px; font-weight: 600; text-align: center;">{rank}</td>
+                <td style="padding: 10px; font-weight: 700;">{it['name']}</td>
+                <td style="padding: 10px; font-weight: 700; color: {ret_color}; text-align: right;">{r_val:+.2f}%</td>
+                <td style="padding: 10px; font-weight: 600; color: {dep_color}; text-align: right;">{vs_dep:+.2f}%p</td>
+                <td style="padding: 10px; font-weight: 600; color: {cash_color}; text-align: right;">{vs_cash:+.2f}%p</td>
+                <td style="padding: 10px; font-size: 0.88rem;">{status}</td>
+            </tr>
+            """)
+            
+        table_html = f"""
+        <div style="overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.92rem; text-align: left;">
+                <thead>
+                    <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1; color: #334155;">
+                        <th style="padding: 10px; text-align: center; width: 60px;">순위</th>
+                        <th style="padding: 10px;">자산명</th>
+                        <th style="padding: 10px; text-align: right;">기간 누적 수익률</th>
+                        <th style="padding: 10px; text-align: right;">🏦 은행예금 대비</th>
+                        <th style="padding: 10px; text-align: right;">💵 현금보유 대비</th>
+                        <th style="padding: 10px;">투자 가치 진단</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(tbl_rows)}
+                </tbody>
+            </table>
+        </div>
+        """
+        st.markdown(table_html, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        > 💡 **실전 투자 교훈 & 인사이트:**
+        > - **은행 예금({deposit_rate}%)은 투자의 절대적 마지노선입니다.** 위험을 짊어지고 주식을 매매했는데 예금 이자보다 낮다면 포트폴리오를 점검해야 합니다.
+        > - **현금(0%)은 상승장에서는 소외되지만, 하락장에서는 가장 강력한 무기입니다.** 우리 시스템의 전략이 '약세 국면'에서 현금 비중을 늘리는 이유가 바로 여기에 있습니다.
+        """)
+    else:
+        st.info("매크로 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.")
 
 # --- [탭 6] 설정 & 전략 커스텀 (한글 입력 지원!) ---
 with tab_settings:
@@ -1253,8 +1783,8 @@ with tab_settings:
         st.rerun()
 
 # ===== 사이드바: 실전 현황판 매매 나침반 =====
-st.sidebar.title("🧺 Dr. Rotation")
-st.sidebar.caption("실전 스윙 나침반 v2.4")
+st.sidebar.title("🏛️ Brothers Capital")
+st.sidebar.caption("브라더스 캐피탈 실전 스윙 나침반 v3.0")
 
 if st.sidebar.button("🔄 데이터 실시간 새로고침", use_container_width=True, help="야후 파이낸스에서 지금 이 순간의 최신 시세를 즉시 다시 긁어옵니다."):
     st.cache_data.clear()
